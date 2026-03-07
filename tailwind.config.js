@@ -77,6 +77,46 @@ module.exports = {
       backdropBlur: {
         pixove: "24px",
       },
+
+      fontFamily: {
+        "sora-bold": ["Sora-Bold", "sans-serif"],
+        "sora-semibold": ["Sora-SemiBold", "sans-serif"],
+        inter: ["Inter-Regular", "sans-serif"],
+        "inter-medium": ["Inter-Medium", "sans-serif"],
+      },
+
+      /**
+       *  FONTS
+       *  --------------------
+       *  1) Sora — Bold (700)
+       *  --------------------
+       *  -Logo Font
+       *  -App logo “Pixove”
+       *  -Large hero titles (Onboarding headline)
+       *  -Big promotional text
+       *  ------------------------
+       *  2) Sora — SemiBold (600)
+       *  ------------------------
+       *  -Headings / Screen Titles
+       *  -Screen titles (Home, Search, Profile)
+       *  -Section headers
+       *  -Card titles if you want stronger hierarchy
+       *  ------------------------
+       *  3) Inter — Regular (400)
+       *  ------------------------
+       *  -Video descriptions
+       *  -Usernames
+       *  -Bio text
+       *  -Input fields
+       *  -Feed content
+       *  -General UI copy
+       *  ------------------------
+       *  4) Inter — Medium (500)
+       *  ------------------------
+       *  -Button text
+       *  -Stats (Followers, Likes, etc.)
+       *  -Navigation labels
+       */
     },
   },
   plugins: [],
