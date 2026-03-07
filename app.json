@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "todo-react-native",
-    "slug": "todo-react-native",
+    "name": "Pixove",
+    "slug": "pixove",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -23,7 +23,8 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "bundler": "metro"
     },
     "plugins": [
       "expo-router",
