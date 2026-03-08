@@ -1,3 +1,4 @@
+import MaskedView from "@react-native-masked-view/masked-view";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useState } from "react";
@@ -9,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const { height } = Dimensions.get("window");
 
@@ -38,12 +40,12 @@ export default function Onboarding() {
     if (currentIndex < onboardingData.length - 1) {
       setCurrentIndex((prev) => prev + 1);
     } else {
-      router.push("/(tabs)/home");
+      router.push("/(auth)/login");
     }
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Image Section */}
       <ImageBackground
         source={{ uri: currentSlide.image }}
@@ -54,7 +56,17 @@ export default function Onboarding() {
           style={styles.gradient}
         />
 
-        <Text style={styles.logo}>Pixove</Text>
+        <MaskedView maskElement={<Text style={styles.logo}>Pixove</Text>}>
+          <LinearGradient
+            colors={["#F97316", "#7C3AED"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{
+              width: 250,
+              height: 100,
+            }}
+          />
+        </MaskedView>
       </ImageBackground>
 
       {/* Content */}
@@ -89,7 +101,7 @@ export default function Onboarding() {
           </LinearGradient>
         </TouchableOpacity>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 

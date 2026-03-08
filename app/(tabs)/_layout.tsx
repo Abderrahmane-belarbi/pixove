@@ -1,4 +1,7 @@
 import { MaterialIcons } from "@expo/vector-icons";
+// @ts-ignore
+import MaskedView from "@react-native-masked-view/masked-view";
+import { LinearGradient } from "expo-linear-gradient";
 import { Tabs } from "expo-router";
 import "react-native-reanimated";
 import "../../global.css";
@@ -10,8 +13,23 @@ type TabIconProps = {
   focused: boolean;
 };
 
-function TabIcon({ name, color, focused }: TabIconProps) {
-  return <MaterialIcons name={name} size={32} color={color} />;
+function TabIcon({ name, focused }: TabIconProps) {
+  if (!focused) {
+    return <MaterialIcons name={name} size={28} color="#A1A1AA" />;
+  }
+
+  return (
+    <MaskedView
+      maskElement={<MaterialIcons name={name} size={28} color="black" />}
+    >
+      <LinearGradient
+        colors={["#F97316", "#7C3AED"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{ width: 28, height: 28 }}
+      />
+    </MaskedView>
+  );
 }
 
 export default function TabsLayout() {
