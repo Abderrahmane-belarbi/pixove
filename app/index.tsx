@@ -16,17 +16,17 @@ const { height } = Dimensions.get("window");
 
 const onboardingData = [
   {
-    image: "/assets/images/onboarding/onboarding-1.jpg",
+    image: require("../assets/images/onboarding/onboarding-1.jpg"),
     title: "Welcome to Pixove",
     description: "Discover and share amazing video content with the world",
   },
   {
-    image: "/assets/images/onboarding/onboarding-2.jpg",
+    image: require("../assets/images/onboarding/onboarding-2.jpg"),
     title: "Create & Share",
     description: "Express yourself with powerful video creation tools",
   },
   {
-    image: "/assets/images/onboarding/onboarding-3.jpg",
+    image: require("../assets/images/onboarding/onboarding-3.jpg"),
     title: "Join the Community",
     description: "Connect with creators worldwide",
   },
@@ -47,10 +47,7 @@ export default function Onboarding() {
   return (
     <SafeAreaView style={styles.container}>
       {/* Image Section */}
-      <ImageBackground
-        source={{ uri: currentSlide.image }}
-        style={styles.image}
-      >
+      <ImageBackground source={currentSlide.image} style={styles.image}>
         <LinearGradient
           colors={["transparent", "rgba(15,15,17,0.6)", "#0F0F11"]}
           style={styles.gradient}
