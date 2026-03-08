@@ -8,6 +8,7 @@ module.exports = {
         // ============================================
         // PIXOVE BRAND COLORS
         // ============================================
+
         // Primary Background - Deep Dark
         "dark-primary": "#0F0F11",
         // Card/Container Background - Dark Gray
