@@ -2,6 +2,7 @@ import InputField from "@/components/form/input-field";
 import { AntDesign } from "@expo/vector-icons";
 import MaskedView from "@react-native-masked-view/masked-view";
 import { LinearGradient } from "expo-linear-gradient";
+import { router } from "expo-router";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function Login() {
@@ -28,7 +29,7 @@ export default function Login() {
         />
         <InputField
           label="Password"
-          placeholder="Enter your password"
+          placeholder="enter your password"
           placeholderColor="#71717A"
           autoCapitalize="none"
           autoComplete="current-password"
@@ -100,7 +101,7 @@ export default function Login() {
           <Text style={{ fontSize: 14, color: "#71717A" }}>
             Don't have an account?
           </Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push("/(auth)/register")}>
             <Text style={{ color: "#BB57A2", fontSize: 14 }}>Sign up</Text>
           </TouchableOpacity>
         </View>

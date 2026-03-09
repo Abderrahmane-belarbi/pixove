@@ -17,6 +17,7 @@ type InputFieldProps = {
   autoCapitalize: "none" | "sentences" | "words" | "characters" | undefined;
   iconName: MaterialIconName;
   autoComplete: AutoComplete;
+  forLogin?: boolean;
 };
 
 export default function InputField({
@@ -26,6 +27,7 @@ export default function InputField({
   autoCapitalize,
   autoComplete,
   iconName,
+  forLogin = true,
 }: InputFieldProps) {
   const [showPassword, setShowPassword] = useState(false);
   return (
@@ -39,7 +41,7 @@ export default function InputField({
         autoCapitalize={autoCapitalize}
         secureTextEntry={label === "Password" && !showPassword}
       />
-      {label === "Password" && (
+      {label === "Password" && forLogin && (
         <TouchableOpacity>
           <Text style={styles.forgotPassword}>Forget Password?</Text>
         </TouchableOpacity>
