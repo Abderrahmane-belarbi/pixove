@@ -1,20 +1,28 @@
 import MaskedView from "@react-native-masked-view/masked-view";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import { useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   Dimensions,
+  FlatList,
   ImageBackground,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
+  ViewToken,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const { height } = Dimensions.get("window");
+const { width, height } = Dimensions.get("window");
 
-const onboardingData = [
+type OnboardingSlide = {
+  image: number;
+  title: string;
+  description: string;
+};
+
+const onboardingData: OnboardingSlide[] = [
   {
     image: require("../assets/images/onboarding/onboarding-1.jpg"),
     title: "Welcome to Pixove",
@@ -34,55 +42,108 @@ const onboardingData = [
 
 export default function Onboarding() {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const currentSlide = onboardingData[currentIndex];
+  const flatListRef = useRef<FlatList<OnboardingSlide>>(null);
 
-  const handleNext = () => {
+  const viewabilityConfig = useMemo(
+    () => ({
+      itemVisiblePercentThreshold: 50,
+    }),
+    [],
+  );
+
+  const onViewableItemsChanged = useRef(
+    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
+      const visibleItem = viewableItems[0];
+
+      if (visibleItem?.index !== undefined && visibleItem.index !== null) {
+        setCurrentIndex(visibleItem.index);
+      }
+    },
+  ).current;
+
+  const scrollToSlide = useCallback((index: number) => {
+    flatListRef.current?.scrollToIndex({ index, animated: true });
+  }, []);
+
+  const handleNext = useCallback(() => {
     if (currentIndex < onboardingData.length - 1) {
-      setCurrentIndex((prev) => prev + 1);
-    } else {
-      router.push("/(auth)/login");
+      scrollToSlide(currentIndex + 1);
+      return;
     }
-  };
+
+    router.replace("/(auth)/login");
+  }, [currentIndex, scrollToSlide]);
+
+  const handleDotPress = useCallback(
+    (index: number) => {
+      if (index !== currentIndex) {
+        scrollToSlide(index);
+      }
+    },
+    [currentIndex, scrollToSlide],
+  );
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Image Section */}
-      <ImageBackground source={currentSlide.image} style={styles.image}>
+      <MaskedView maskElement={<Text style={styles.logo}>Pixove</Text>}>
         <LinearGradient
-          colors={["transparent", "rgba(15,15,17,0.6)", "#0F0F11"]}
-          style={styles.gradient}
+          colors={["#F97316", "#7C3AED"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.logoGradient}
         />
+      </MaskedView>
 
-        <MaskedView maskElement={<Text style={styles.logo}>Pixove</Text>}>
-          <LinearGradient
-            colors={["#F97316", "#7C3AED"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={{
-              width: 250,
-              height: 100,
-            }}
-          />
-        </MaskedView>
-      </ImageBackground>
+      <FlatList
+        ref={flatListRef}
+        data={onboardingData}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={(_, index) => index.toString()}
+        getItemLayout={(_, index) => ({
+          length: width,
+          offset: width * index,
+          index,
+        })}
+        onScrollToIndexFailed={({ index }) => {
+          requestAnimationFrame(() => {
+            flatListRef.current?.scrollToOffset({
+              offset: index * width,
+              animated: true,
+            });
+          });
+        }}
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={viewabilityConfig}
+        renderItem={({ item }) => (
+          <View style={styles.slide}>
+            <ImageBackground source={item.image} style={styles.image}>
+              <LinearGradient
+                colors={["transparent", "rgba(15,15,17,0.6)", "#0F0F11"]}
+                style={styles.gradient}
+              />
+            </ImageBackground>
 
-      {/* Content */}
-      <View style={styles.content}>
-        <Text style={styles.title}>{currentSlide.title}</Text>
-        <Text style={styles.description}>{currentSlide.description}</Text>
+            <View style={styles.content}>
+              <Text style={styles.title}>{item.title}</Text>
+              <Text style={styles.description}>{item.description}</Text>
+            </View>
+          </View>
+        )}
+      />
 
-        {/* Dots */}
+      <View style={styles.footer}>
         <View style={styles.dotsContainer}>
           {onboardingData.map((_, index) => (
             <TouchableOpacity
               key={index}
-              onPress={() => setCurrentIndex(index)}
+              onPress={() => handleDotPress(index)}
               style={[styles.dot, index === currentIndex && styles.activeDot]}
             />
           ))}
         </View>
 
-        {/* Button */}
         <TouchableOpacity style={styles.button} onPress={handleNext}>
           <LinearGradient
             colors={["#7C3AED", "#F97316"]}
@@ -107,22 +168,33 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#0F0F11",
   },
-  image: {
-    height: height * 0.6,
-    justifyContent: "flex-start",
-  },
-  gradient: {
-    ...StyleSheet.absoluteFillObject,
-  },
   logo: {
-    marginTop: 60,
+    marginTop: 2,
     alignSelf: "center",
     fontSize: 28,
     fontWeight: "bold",
     color: "white",
   },
+  logoGradient: {
+    width: 250,
+    height: 56,
+    alignSelf: "center",
+  },
+  slide: {
+    width,
+    flex: 1,
+    backgroundColor: "#0F0F11",
+  },
+  image: {
+    height: height * 0.56,
+    justifyContent: "flex-start",
+  },
+  gradient: {
+    ...StyleSheet.absoluteFillObject,
+  },
   content: {
-    padding: 24,
+    paddingHorizontal: 24,
+    paddingTop: 28,
   },
   title: {
     color: "white",
@@ -134,12 +206,15 @@ const styles = StyleSheet.create({
     color: "#A1A1AA",
     fontSize: 16,
     textAlign: "center",
-    marginBottom: 30,
+  },
+  footer: {
+    paddingHorizontal: 24,
+    paddingBottom: 24,
+    gap: 16,
   },
   dotsContainer: {
     flexDirection: "row",
     justifyContent: "center",
-    marginBottom: 30,
   },
   dot: {
     width: 8,

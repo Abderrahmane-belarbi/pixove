@@ -11,6 +11,8 @@ module.exports = {
 
         // Primary Background - Deep Dark
         "dark-primary": "#0F0F11",
+        // Secondary Dark - Placeholders
+        "dark-secondary": "#71717A",
         // Card/Container Background - Dark Gray
         "card-primary": "#18181B",
         // Border/Divider - Medium Gray
@@ -23,6 +25,8 @@ module.exports = {
         "orange-primary": "#F97316",
         // Gradient End - Pink
         "pink-primary": "#EC4899",
+        // MidGradient
+        "orange-pink": "#BB57A2",
 
         // ============================================
         // USAGE EXAMPLES
