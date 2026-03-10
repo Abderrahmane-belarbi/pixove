@@ -1,45 +1,44 @@
-import User from "../models/User.js";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
+import { Request, Response } from "express";
+import { OAuth2Client } from "google-auth-library";
+import { sendMail } from "../config/google-mailer";
+import User from "../models/User";
+import { generateTokenSetCookie } from "../utils/generate-token-cookie";
 import {
   generateVerificationToken,
   generateVerificationTokenExpiresAt,
-} from "../utils/generate-verification-token.js";
-import { generateTokenSetCookie } from "../utils/generate-token-cookie.js";
-import { UAParser } from "ua-parser-js";
-import { sendMail } from "../config/google-mailer.js";
-import { OAuth2Client } from "google-auth-library";
+} from "../utils/generate-verification-token";
 
-export async function checkAuth(req, res) {
+export async function checkAuth(req: Request, res: Response) {
   try {
     const user = await User.findById(req.userId).select("-password");
-    if (!user)
-      return res
-        .status(404)
-        .json({ error: "User not found" });
-    return res
-      .status(200)
-      .json({ message: "User found", user });
+    if (!user) return res.status(404).json({ error: "User not found" });
+    return res.status(200).json({ message: "User found", user });
   } catch (error) {
-    return res
-      .status(500)
-      .json({ error: error.message });
+    const message =
+      error instanceof Error ? error.message : "Internal server error";
+    return res.status(500).json({ error: message });
   }
 }
 
 function getGoogleClient() {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  const redirectUri = process.env.MODE === "development" ? process.env.LOCAL_GOOGLE_REDIRECT_URI : process.env.PUBLIC_GOOGLE_REDIRECT_URI;
-  if(!clientId || !clientSecret || !redirectUri) throw new Error("Google client credentials not found");
+  const redirectUri =
+    process.env.MODE === "development"
+      ? process.env.LOCAL_GOOGLE_REDIRECT_URI
+      : process.env.PUBLIC_GOOGLE_REDIRECT_URI;
+  if (!clientId || !clientSecret || !redirectUri)
+    throw new Error("Google client credentials not found");
   return new OAuth2Client({
     clientId,
     clientSecret,
     redirectUri,
-  })
+  });
 }
 
-function setGoogleOAuthStateCookie(res, state) {
+function setGoogleOAuthStateCookie(res: Response, state: string) {
   res.cookie("google_oauth_state", state, {
     httpOnly: true,
     secure: process.env.MODE !== "development",
@@ -48,7 +47,7 @@ function setGoogleOAuthStateCookie(res, state) {
   });
 }
 
-function clearGoogleOAuthStateCookie(res) {
+function clearGoogleOAuthStateCookie(res: Response) {
   res.clearCookie("google_oauth_state", {
     httpOnly: true,
     secure: process.env.MODE !== "development",
@@ -56,7 +55,7 @@ function clearGoogleOAuthStateCookie(res) {
   });
 }
 
-export async function googleLoginHandler(req, res) {
+export async function googleLoginHandler(req: Request, res: Response) {
   try {
     const client = getGoogleClient();
     const state = crypto.randomBytes(32).toString("hex");
@@ -65,20 +64,22 @@ export async function googleLoginHandler(req, res) {
       access_type: "offline",
       scope: ["openid", "profile", "email"],
       prompt: "consent",
-      state // for CSRF protection
+      state, // for CSRF protection
     });
     return res.redirect(url);
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    const message =
+      error instanceof Error ? error.message : "Internal server error";
+    return res.status(500).json({ error: message });
   }
 }
 
-export async function googleCallbackHandler(req, res) {
+export async function googleCallbackHandler(req: Request, res: Response) {
   const code = req.query.code;
   const state = req.query.state;
   const stateFromCookie = req.cookies?.google_oauth_state;
-  if(!code) return res.status(400).json({ error: "Code not found" });
-  if(!state || !stateFromCookie || state !== stateFromCookie) {
+  if (!code) return res.status(400).json({ error: "Code not found" });
+  if (!state || !stateFromCookie || state !== stateFromCookie) {
     clearGoogleOAuthStateCookie(res);
     return res.status(400).json({ error: "Invalid OAuth state" });
   }
@@ -86,7 +87,8 @@ export async function googleCallbackHandler(req, res) {
     clearGoogleOAuthStateCookie(res);
     const client = getGoogleClient();
     const { tokens } = await client.getToken(code);
-    if(!tokens?.id_token) return res.status(400).json({ error: "Google ID token not found" });
+    if (!tokens?.id_token)
+      return res.status(400).json({ error: "Google ID token not found" });
     // verify token and read the user info from it
     const ticket = await client.verifyIdToken({
       idToken: tokens.id_token,
@@ -98,62 +100,36 @@ export async function googleCallbackHandler(req, res) {
     }
     const email = payload?.email;
     const emailVerified = payload?.email_verified;
-    if(!email || !emailVerified) return res.status(400).json({ error: "Email not verified" });
+    if (!email || !emailVerified)
+      return res.status(400).json({ error: "Email not verified" });
     const emailNormalized = email.toLowerCase().trim();
-    let user = await User.findOne({email: emailNormalized});
-
-    const userAgent = req.headers["user-agent"];
-    const parser = new UAParser(userAgent);
-    const ipAddress = req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.remoteAddress || null;
-    const browser = parser.getBrowser().name;
-    const os = parser.getOS().name;
-    const device = parser.getDevice().type || "desktop";
-    const authMeta = {
-      login: {
-        at: new Date(),
-        ipAddress,
-        userAgent,
-        browser,
-        os,
-        device
-      }
-    }
-
-    if(!user) {      
+    let user = await User.findOne({ email: emailNormalized });
+    if (!user) {
       user = await User.create({
         name: payload?.name,
         email: emailNormalized,
         password: undefined,
         isVerified: true,
         picture: payload?.picture,
-        authMeta: {
-          ...authMeta,
-          emailVerifiedAt: new Date(),
-        },
-      })
+      });
     } else {
-      user.authMeta = {
-        ...authMeta,
-        emailVerifiedAt: user.authMeta?.emailVerifiedAt || (user.isVerified ? new Date() : undefined),
-      };
-
-      if(!user.isVerified) {
+      if (!user.isVerified) {
         user.isVerified = true;
         user.verificationToken = undefined;
         user.verificationTokenExpiresAt = undefined;
-        user.authMeta.emailVerifiedAt = new Date();
       }
       await user.save();
     }
     generateTokenSetCookie(res, user._id);
-    const redirectUrl =  `${process.env.MODE === "development" ? process.env.LOCAL_CLIENT_URL : process.env.PUBLIC_CLIENT_URL}/dashboard`
+    const redirectUrl = `${process.env.MODE === "development" ? process.env.LOCAL_CLIENT_URL : process.env.PUBLIC_CLIENT_URL}/dashboard`;
     return res.redirect(redirectUrl);
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return res.status(500).json({ error: message });
   }
 }
 
-export async function signup(req, res) {
+export async function signup(req: Request, res: Response) {
   try {
     const { email, password, name } = req.body;
     if (!email || !password || !name) {
@@ -177,16 +153,6 @@ export async function signup(req, res) {
       name,
       verificationToken,
       verificationTokenExpiresAt,
-      authMeta: {
-        login: {
-          at: null,
-          ipAddress: null,
-          browser: null,
-          os: null,
-          device: null
-        },
-        passwordChangedAt: null
-      }
     });
 
     if (!createdUser) {
@@ -203,25 +169,17 @@ export async function signup(req, res) {
     return res.status(201).json({
       message: "User created successfully, Please verify your email.",
     });
-
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return res.status(500).json({ error: message });
   }
 }
 
-export async function login(req, res) {
-  const userAgent = req.headers["user-agent"];
-  const parser = new UAParser(userAgent);
-  const ipAddress = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
-  const browser = parser.getBrowser().name;
-  const os = parser.getOS().name;
-  const device = parser.getDevice().type || "desktop";
+export async function login(req: Request, res: Response) {
   try {
     const { email, password } = req.body;
     if (!email || !password)
-      return res
-        .status(400)
-        .json({ error: "Email and password are required" });
+      return res.status(400).json({ error: "Email and password are required" });
 
     // we put Invalid credentials for both email and password for security reasons
     const user = await User.findOne({ email });
@@ -232,17 +190,10 @@ export async function login(req, res) {
         .status(403)
         .json({ error: "Please verify your email before logging in" });
 
-    const passwordMatch = await bcrypt.compare(password, user.password);
+    const passwordMatch = await bcrypt.compare(password, user.password!);
 
     if (!passwordMatch)
       return res.status(400).json({ error: "Invalid credentials" });
-
-    user.authMeta.login.at = new Date();
-    user.authMeta.login.ipAddress = ipAddress;
-    user.authMeta.login.browser = browser;
-    user.authMeta.login.os = os;
-    user.authMeta.login.device = device;
-    await user.save();
 
     // jwt
     generateTokenSetCookie(res, user._id);
@@ -254,24 +205,24 @@ export async function login(req, res) {
         name: user.name,
         email: user.email,
         isVerified: user.isVerified,
-        authMeta: user.authMeta,
       },
     });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return res.status(500).json({ error: message });
   }
 }
 
-export function logout(req, res) {
+export function logout(req: Request, res: Response) {
   res.clearCookie("token");
-  res
-    .status(200)
-    .json({ message: "Logged out successfully" });
+  res.status(200).json({ message: "Logged out successfully" });
 }
 
-export async function resendVerificationEmail(req, res) {
+export async function resendVerificationEmail(req: Request, res: Response) {
   try {
-    const resetCooldown = parseInt(process.env.VERIFICATION_RESEND_COOLDOWN_SECONDS || 60);
+    const resetCooldown = parseInt(
+      process.env.VERIFICATION_RESEND_COOLDOWN_SECONDS!,
+    );
 
     const { email } = req.body;
     if (!email) return res.status(400).json({ message: "Email is required" });
@@ -287,7 +238,7 @@ export async function resendVerificationEmail(req, res) {
 
     let remainingSeconds = 0;
 
-    if(user.verificationResendAvailableAt) {
+    if (user.verificationResendAvailableAt) {
       const availableAt = user.verificationResendAvailableAt.getTime(); // milliseconds
       remainingSeconds = Math.max(
         0,
@@ -295,16 +246,21 @@ export async function resendVerificationEmail(req, res) {
       );
     }
 
-    if(remainingSeconds > 0) { // 429 Too many requests
-      return res.status(429).json({ message: `You can request a new verification code in ${remainingSeconds} second${remainingSeconds > 1 ? 's' : ''}.` });
+    if (remainingSeconds > 0) {
+      // 429 Too many requests
+      return res.status(429).json({
+        message: `You can request a new verification code in ${remainingSeconds} second${remainingSeconds > 1 ? "s" : ""}.`,
+      });
     }
 
     const verificationToken = generateVerificationToken();
     const verificationTokenExpiresAt = generateVerificationTokenExpiresAt();
 
     user.verificationToken = verificationToken;
-    user.verificationTokenExpiresAt = verificationTokenExpiresAt;
-    user.verificationResendAvailableAt = new Date(Date.now() + resetCooldown * 1000);
+    user.verificationTokenExpiresAt = new Date(verificationTokenExpiresAt);
+    user.verificationResendAvailableAt = new Date(
+      Date.now() + resetCooldown * 1000,
+    );
     await user.save();
 
     sendMail({
@@ -312,21 +268,17 @@ export async function resendVerificationEmail(req, res) {
       subject: "Verify your email",
       text: `Your verification code is ${verificationToken}`,
     });
-    return res
-      .status(200)
-      .json({ message: "Verification code resent successfully. It may take up to a minute to arrive." });
+    return res.status(200).json({
+      message:
+        "Verification code resent successfully. It may take up to a minute to arrive.",
+    });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return res.status(500).json({ error: message });
   }
 }
 
-export async function verificationEmail(req, res) {
-  const userAgent = req.headers["user-agent"];
-  const parser = new UAParser(userAgent);
-  const ipAddress = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
-  const browser = parser.getBrowser().name;
-  const os = parser.getOS().name;
-  const device = parser.getDevice().type || "desktop";
+export async function verificationEmail(req: Request, res: Response) {
   try {
     const { code, email } = req.body;
     if (!code || !email)
@@ -352,13 +304,6 @@ export async function verificationEmail(req, res) {
     user.isVerified = true;
     user.verificationTokenExpiresAt = undefined;
     user.verificationToken = undefined;
-    user.authMeta.login.at = new Date();
-    user.authMeta.login.ipAddress = ipAddress;
-    user.authMeta.login.browser = browser;
-    user.authMeta.login.os = os;
-    user.authMeta.login.device = device;
-    user.authMeta.emailVerifiedAt = new Date();
-
     await user.save();
 
     // jwt
@@ -371,15 +316,15 @@ export async function verificationEmail(req, res) {
         name: user.name,
         email: user.email,
         isVerified: user.isVerified,
-        authMeta: user.authMeta,
       },
     });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return res.status(500).json({ error: message });
   }
 }
 
-export async function forgotPassword(req, res) {
+export async function forgotPassword(req: Request, res: Response) {
   try {
     const { email } = req.body;
     const user = await User.findOne({ email });
@@ -392,7 +337,7 @@ export async function forgotPassword(req, res) {
         .digest("hex");
       // Update user token
       user.resetPasswordToken = hashedToken;
-      user.resetPasswordExpiresAt = Date.now() + 10 * 60 * 1000; // expires in 10 min
+      user.resetPasswordExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // expires in 10 min
       await user.save();
 
       // Send email to user resetPasswordToken not the hashed
@@ -406,28 +351,22 @@ export async function forgotPassword(req, res) {
       });
     }
 
-    return res
-      .status(200)
-      .json({ message: "If an account exists, a reset link has been sent. Check your inbox and spam folder." });
+    return res.status(200).json({
+      message:
+        "If an account exists, a reset link has been sent. Check your inbox and spam folder.",
+    });
   } catch (error) {
-    return res
-      .status(500)
-      .json({ error: error.message });
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return res.status(500).json({ error: message });
   }
 }
 
-export async function resetPassword(req, res) {
+export async function resetPassword(req: Request, res: Response) {
   try {
     const token = req.params.token;
     const { password } = req.body;
-    if (!password)
-      return res
-        .status(400)
-        .json({ error: "Password required" });
-    if (!token)
-      return res
-        .status(400)
-        .json({ error: "Token required" });
+    if (!password) return res.status(400).json({ error: "Password required" });
+    if (!token) return res.status(400).json({ error: "Token required" });
 
     const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
 
@@ -447,16 +386,11 @@ export async function resetPassword(req, res) {
     user.password = hashedPassword;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpiresAt = undefined;
-    user.authMeta.passwordChangedAt = new Date()
     await user.save();
 
-    return res
-      .status(200)
-      .json({ message: "Password reset successfully" });
+    return res.status(200).json({ message: "Password reset successfully" });
   } catch (error) {
-    return res
-      .status(500)
-      .json({ error: error.message });
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return res.status(500).json({ error: message });
   }
 }
-

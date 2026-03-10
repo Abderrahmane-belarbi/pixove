@@ -1,7 +1,18 @@
 import express from "express";
-import { checkAuth, forgotPassword, googleLoginHandler, googleCallbackHandler, login, logout, resendVerificationEmail, resetPassword, signup, verificationEmail } from "../controllers/auth-controller.js";
-import { verifyToken } from "../middleware/verify-token.js";
+import {
+    checkAuth,
+    forgotPassword,
+    googleCallbackHandler,
+    googleLoginHandler,
+    login,
+    logout,
+    resendVerificationEmail,
+    resetPassword,
+    signup,
+    verificationEmail,
+} from "../controllers/auth-controller";
 import updateProfile from "../controllers/user-controller.js";
+import { verifyToken } from "../middleware/verify-token.js";
 
 const router = express.Router();
 
@@ -20,6 +31,5 @@ router.post("/forgot-password", forgotPassword);
 router.post("/reset-password/:token", resetPassword);
 
 router.put("/update-profile", verifyToken, updateProfile);
-
 
 export default router;
