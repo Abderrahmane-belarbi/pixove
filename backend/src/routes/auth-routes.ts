@@ -11,8 +11,8 @@ import {
     signup,
     verificationEmail,
 } from "../controllers/auth-controller";
-import updateProfile from "../controllers/user-controller.js";
-import { verifyToken } from "../middleware/verify-token.js";
+import updateProfile from "../controllers/user-controller";
+import { verifyToken } from "../middleware/verify-token";
 
 const router = express.Router();
 

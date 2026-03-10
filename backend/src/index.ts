@@ -1,10 +1,10 @@
-import "dotenv/config";
-import express from "express";
-import { connectToDatabase } from "./database/connect-to-database.js";
-import authRoutes from "./routes/auth-routes.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import "dotenv/config";
+import express from "express";
 import path from "path";
+import { connectToDatabase } from "./database/connect-to-database";
+import authRoutes from "./routes/auth-routes";
 
 const app = express();
 
@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 5000;
 const __dirname = path.resolve();
 const allowedOrigins = ["http://localhost:3000", process.env.CLIENT_URL].filter(
   Boolean,
-);
+)[0];
 
 app.use(
   cors({

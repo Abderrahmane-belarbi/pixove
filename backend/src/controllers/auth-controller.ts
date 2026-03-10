@@ -78,8 +78,14 @@ export async function googleCallbackHandler(req: Request, res: Response) {
   const code = req.query.code;
   const state = req.query.state;
   const stateFromCookie = req.cookies?.google_oauth_state;
-  if (!code) return res.status(400).json({ error: "Code not found" });
-  if (!state || !stateFromCookie || state !== stateFromCookie) {
+  if (!code || typeof code !== "string")
+    return res.status(400).json({ error: "Code not found" });
+  if (
+    !state ||
+    typeof state !== "string" ||
+    !stateFromCookie ||
+    state !== stateFromCookie
+  ) {
     clearGoogleOAuthStateCookie(res);
     return res.status(400).json({ error: "Invalid OAuth state" });
   }
@@ -363,7 +369,8 @@ export async function forgotPassword(req: Request, res: Response) {
 
 export async function resetPassword(req: Request, res: Response) {
   try {
-    const token = req.params.token;
+    const rawToken = req.params.token;
+    const token = Array.isArray(rawToken) ? rawToken[0] : rawToken;
     const { password } = req.body;
     if (!password) return res.status(400).json({ error: "Password required" });
     if (!token) return res.status(400).json({ error: "Token required" });
