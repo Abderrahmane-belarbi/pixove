@@ -1,12 +1,17 @@
 import { google } from "googleapis";
+type SendMailProps = {
+  to: string;
+  subject: string;
+  text: string;
+};
 
-export async function sendMail({ to, subject, text }) {
+export async function sendMail({ to, subject, text }: SendMailProps) {
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
     process.env.MODE === "development"
       ? process.env.LOCAL_GOOGLE_REDIRECT_URI
-      : process.env.PUBLIC_GOOGLE_REDIRECT_URI
+      : process.env.PUBLIC_GOOGLE_REDIRECT_URI,
   );
 
   // Set the refresh token
@@ -17,9 +22,9 @@ export async function sendMail({ to, subject, text }) {
   // Encode message
   const raw = Buffer.from(
     `From: "CrewAuth" <${process.env.EMAIL_FROM}>\r\n` +
-    `To: ${to}\r\n` +
-    `Subject: ${subject}\r\n\r\n` +
-    `${text}`
+      `To: ${to}\r\n` +
+      `Subject: ${subject}\r\n\r\n` +
+      `${text}`,
   )
     .toString("base64")
     .replace(/\+/g, "-")
