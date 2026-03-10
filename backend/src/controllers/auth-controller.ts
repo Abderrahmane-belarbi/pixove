@@ -26,7 +26,7 @@ function getGoogleClient() {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
   const redirectUri =
-    process.env.MODE === "development"
+    process.env.NODE_ENV === "development"
       ? process.env.LOCAL_GOOGLE_REDIRECT_URI
       : process.env.PUBLIC_GOOGLE_REDIRECT_URI;
   if (!clientId || !clientSecret || !redirectUri)
@@ -41,7 +41,7 @@ function getGoogleClient() {
 function setGoogleOAuthStateCookie(res: Response, state: string) {
   res.cookie("google_oauth_state", state, {
     httpOnly: true,
-    secure: process.env.MODE !== "development",
+    secure: process.env.NODE_ENV !== "development",
     sameSite: "lax",
     maxAge: 10 * 60 * 1000, // 10 minutes
   });
@@ -50,7 +50,7 @@ function setGoogleOAuthStateCookie(res: Response, state: string) {
 function clearGoogleOAuthStateCookie(res: Response) {
   res.clearCookie("google_oauth_state", {
     httpOnly: true,
-    secure: process.env.MODE !== "development",
+    secure: process.env.NODE_ENV !== "development",
     sameSite: "lax",
   });
 }
@@ -127,7 +127,7 @@ export async function googleCallbackHandler(req: Request, res: Response) {
       await user.save();
     }
     generateTokenSetCookie(res, user._id);
-    const redirectUrl = `${process.env.MODE === "development" ? process.env.LOCAL_CLIENT_URL : process.env.PUBLIC_CLIENT_URL}/dashboard`;
+    const redirectUrl = `${process.env.NODE_ENV === "development" ? process.env.LOCAL_CLIENT_URL : process.env.PUBLIC_CLIENT_URL}/dashboard`;
     return res.redirect(redirectUrl);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";

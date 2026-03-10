@@ -1,20 +1,20 @@
-import { google } from 'googleapis';
+import { google } from "googleapis";
 
 app.get("/google", (req, res) => {
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
-    process.env.MODE === "development"
+    process.env.NODE_ENV === "development"
       ? process.env.LOCAL_GOOGLE_REDIRECT_URI
-      : process.env.PUBLIC_GOOGLE_REDIRECT_URI
+      : process.env.PUBLIC_GOOGLE_REDIRECT_URI,
   );
 
-  const scopes = ['https://www.googleapis.com/auth/gmail.send'];
+  const scopes = ["https://www.googleapis.com/auth/gmail.send"];
 
   const url = oauth2Client.generateAuthUrl({
-    access_type: 'offline',
+    access_type: "offline",
     scope: scopes,
-    prompt: 'consent', // ensures refresh token is returned
+    prompt: "consent", // ensures refresh token is returned
   });
 
   res.redirect(url); // send user to Google login
@@ -29,9 +29,9 @@ app.get("/google/callback", async (req, res) => {
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
-    process.env.MODE === "development"
+    process.env.NODE_ENV === "development"
       ? process.env.LOCAL_GOOGLE_REDIRECT_URI
-      : process.env.PUBLIC_GOOGLE_REDIRECT_URI
+      : process.env.PUBLIC_GOOGLE_REDIRECT_URI,
   );
 
   try {
