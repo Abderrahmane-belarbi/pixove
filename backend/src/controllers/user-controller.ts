@@ -1,3 +1,4 @@
+import { Request, Response } from "express";
 import User from "../models/User";
 
 export default async function updateProfile(req: Request, res: Response) {
@@ -6,7 +7,7 @@ export default async function updateProfile(req: Request, res: Response) {
     if (!userId) return res.status(401).json({ error: "User unauthorized." });
 
     const allowedFields = ["name", "phone", "location", "birthDate", "bio"];
-    let updates = {};
+    let updates: Record<string, string> = {};
 
     allowedFields.forEach((field) => {
       if (req.body[field] !== undefined) {
@@ -23,6 +24,7 @@ export default async function updateProfile(req: Request, res: Response) {
       .status(200)
       .json({ message: "Your changes have been saved successfully.", user });
   } catch (error) {
-    return res.status(500).json({ error: error.message || "Server error" });
+    const message = error instanceof Error ? error.message : "Server error";
+    return res.status(500).json({ error: message });
   }
 }
