@@ -11,13 +11,14 @@ import {
 type MaterialIconName = React.ComponentProps<typeof MaterialIcons>["name"];
 type AutoComplete = React.ComponentProps<typeof TextInput>["autoComplete"];
 type InputFieldProps = {
-  label: "Email" | "Password" | "Username";
+  label: "Email" | "Password" | "Name";
   placeholder: string;
   placeholderColor: string;
   autoCapitalize: "none" | "sentences" | "words" | "characters" | undefined;
   iconName: MaterialIconName;
   autoComplete: AutoComplete;
   forLogin?: boolean;
+  onChange: (value: string) => void;
 };
 
 export default function InputField({
@@ -28,6 +29,7 @@ export default function InputField({
   autoComplete,
   iconName,
   forLogin = true,
+  onChange,
 }: InputFieldProps) {
   const [showPassword, setShowPassword] = useState(false);
   return (
@@ -40,6 +42,7 @@ export default function InputField({
         autoComplete={autoComplete}
         autoCapitalize={autoCapitalize}
         secureTextEntry={label === "Password" && !showPassword}
+        onChangeText={(value) => onChange(value)}
       />
       {label === "Password" && forLogin && (
         <TouchableOpacity>

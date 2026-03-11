@@ -1,12 +1,30 @@
 import InputField from "@/components/form/input-field";
+import { useAuth } from "@/store/auth.store";
 import { AntDesign } from "@expo/vector-icons";
 import MaskedView from "@react-native-masked-view/masked-view";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
+import { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function Register() {
-  function handleRegister() {}
+  const [registerInput, setRegisterInput] = useState({
+    name: "",
+    email: "",
+    password: "",
+  });
+  const { signup } = useAuth();
+  async function handleRegister() {
+    try {
+      await signup(
+        registerInput.email,
+        registerInput.password,
+        registerInput.name,
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  }
   return (
     <View style={styles.container}>
       <MaskedView maskElement={<Text style={styles.logo}>Pixove</Text>}>
@@ -20,12 +38,17 @@ export default function Register() {
       <Text style={styles.subtitle}>Create your account</Text>
       <View style={styles.form}>
         <InputField
-          label="Username"
+          label="Name"
           placeholder="john_doe"
           placeholderColor="#71717A"
           autoCapitalize="none"
           autoComplete="name"
           iconName="person"
+          onChange={(value) =>
+            setRegisterInput((prev) => {
+              return { ...prev, name: value };
+            })
+          }
         />
         <InputField
           label="Email"
@@ -34,6 +57,11 @@ export default function Register() {
           autoCapitalize="none"
           autoComplete="email"
           iconName="mail-outline"
+          onChange={(value) =>
+            setRegisterInput((prev) => {
+              return { ...prev, email: value };
+            })
+          }
         />
         <InputField
           label="Password"
@@ -43,6 +71,11 @@ export default function Register() {
           autoComplete="current-password"
           iconName="lock-outline"
           forLogin={false}
+          onChange={(value) =>
+            setRegisterInput((prev) => {
+              return { ...prev, password: value };
+            })
+          }
         />
         <TouchableOpacity style={styles.button} onPress={handleRegister}>
           <LinearGradient
