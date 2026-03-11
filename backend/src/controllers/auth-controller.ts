@@ -166,11 +166,11 @@ export async function signup(req: Request, res: Response) {
     }
 
     // Don't block signup response on external SMTP/provider availability.
-    sendMail({
-      to: createdUser.email,
-      subject: "Verify your email",
-      text: `Your verification code is ${verificationToken}`,
-    });
+    //sendMail({
+    //  to: createdUser.email,
+    //  subject: "Verify your email",
+    //  text: `Your verification code is ${verificationToken}`,
+    //});
 
     return res.status(201).json({
       message: "User created successfully, Please verify your email.",
