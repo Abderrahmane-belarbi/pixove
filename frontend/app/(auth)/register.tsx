@@ -1,4 +1,5 @@
 import InputField from "@/components/form/input-field";
+import { FeedbackStatus } from "@/components/shared/feedback-status";
 import { useAuth } from "@/store/auth.store";
 import { AntDesign } from "@expo/vector-icons";
 import MaskedView from "@react-native-masked-view/masked-view";
@@ -83,6 +84,13 @@ export default function Register() {
             })
           }
         />
+        {message ||
+          (error && (
+            <FeedbackStatus
+              type={message ? "success" : "error"}
+              message={message || error}
+            />
+          ))}
         <TouchableOpacity style={styles.button} onPress={handleRegister}>
           <LinearGradient
             colors={["#7C3AED", "#F97316"]}

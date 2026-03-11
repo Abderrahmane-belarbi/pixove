@@ -140,13 +140,13 @@ export async function signup(req: Request, res: Response) {
     const { email, password, name } = req.body;
     if (!email || !password || !name) {
       return res.status(400).json({
-        message: "Email, password and name are required",
+        error: "Email, password and name are required",
       });
     }
 
     const exist = await User.findOne({ email });
     if (exist) {
-      return res.status(409).json({ message: "Email already exist" });
+      return res.status(409).json({ error: "Email already exist" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -162,7 +162,7 @@ export async function signup(req: Request, res: Response) {
     });
 
     if (!createdUser) {
-      return res.status(500).json({ message: "Failed to create user" });
+      return res.status(500).json({ error: "Failed to create user" });
     }
 
     // Don't block signup response on external SMTP/provider availability.
