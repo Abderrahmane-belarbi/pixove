@@ -1,6 +1,13 @@
+import { User } from "@/types";
+import { Platform } from "react-native";
 import { create } from "zustand";
+const API_BASE_URL =
+  process.env.EXPO_PUBLIC_API_URL ||
+  (Platform.OS === "android"
+    ? "http://192.168.1.8:5000"
+    : "http://localhost:5000");
 
-const API_URL = "http://localhost:5000/api/auth";
+const API_URL = `${API_BASE_URL}/api/auth`;
 
 const REQUEST_TIMEOUT_MS = 15000;
 
@@ -19,7 +26,17 @@ async function fetchWithTimeout(
   }
 }
 
-export const useAuth = create((set) => ({
+interface Auth {
+  user: User | null | undefined;
+  isAuthenticated: boolean;
+  error: string | null;
+  isLoading: boolean;
+  isCheckingAuth: boolean;
+  message: string | null;
+  signup: (email: string, password: string, name: string) => Promise<void>;
+}
+
+export const useAuth = create<Auth>((set) => ({
   user: null,
   isAuthenticated: false,
   error: null,
@@ -90,13 +107,12 @@ export const useAuth = create((set) => ({
         throw new Error(errorMessage);
       }
     } catch (error) {
+      console.log("error:", error);
       let errorMessage = "Something went wrong";
       if (error instanceof Error) {
         set({ error: error.message });
         errorMessage =
-          error.name === "AbortError"
-            ? "Signup request timed out. Check server logs for SMTP/DB connectivity on Render."
-            : error.message || "Error signing up";
+          error.name === "AbortError" ? error.message : "Error signing up";
         set({ error: errorMessage });
       } else {
         set({ error: errorMessage });

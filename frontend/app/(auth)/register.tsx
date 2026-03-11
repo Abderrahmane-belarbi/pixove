@@ -5,7 +5,13 @@ import MaskedView from "@react-native-masked-view/masked-view";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 export default function Register() {
   const [registerInput, setRegisterInput] = useState({
@@ -13,7 +19,7 @@ export default function Register() {
     email: "",
     password: "",
   });
-  const { signup } = useAuth();
+  const { signup, message, error, isLoading } = useAuth();
   async function handleRegister() {
     try {
       await signup(
@@ -84,7 +90,11 @@ export default function Register() {
             end={{ x: 1, y: 0 }}
             style={styles.buttonGradient}
           >
-            <Text style={styles.buttonText}>Sign up</Text>
+            {isLoading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Sign up</Text>
+            )}
           </LinearGradient>
         </TouchableOpacity>
 
