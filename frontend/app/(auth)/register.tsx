@@ -5,7 +5,7 @@ import { AntDesign } from "@expo/vector-icons";
 import MaskedView from "@react-native-masked-view/masked-view";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   StyleSheet,
@@ -20,7 +20,13 @@ export default function Register() {
     email: "",
     password: "",
   });
-  const { signup, message, error, isLoading } = useAuth();
+
+  const { signup, message, error, isLoading, clearAuthFeedback } = useAuth();
+
+  useEffect(() => {
+    clearAuthFeedback();
+  }, [clearAuthFeedback]);
+
   async function handleRegister() {
     try {
       await signup(
@@ -28,6 +34,9 @@ export default function Register() {
         registerInput.password,
         registerInput.name,
       );
+      setTimeout(() => {
+        router.replace("/(auth)/login");
+      }, 1000);
     } catch (error) {
       console.log(error);
     }
@@ -84,13 +93,8 @@ export default function Register() {
             })
           }
         />
-        {message ||
-          (error && (
-            <FeedbackStatus
-              type={message ? "success" : "error"}
-              message={message || error}
-            />
-          ))}
+        {error && <FeedbackStatus type={"error"} message={error} />}
+        {message && <FeedbackStatus type={"success"} message={message} />}
         <TouchableOpacity style={styles.button} onPress={handleRegister}>
           <LinearGradient
             colors={["#7C3AED", "#F97316"]}

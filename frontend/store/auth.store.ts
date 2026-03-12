@@ -1,10 +1,10 @@
-import { User } from "@/types";
 import { Platform } from "react-native";
 import { create } from "zustand";
+import { User } from "../../types";
 const API_BASE_URL =
   process.env.EXPO_PUBLIC_API_URL ||
   (Platform.OS === "android"
-    ? "http://192.168.1.8:5000"
+    ? "http://10.67.124.79:5000"
     : "http://localhost:5000");
 
 const API_URL = `${API_BASE_URL}/api/auth`;
@@ -33,6 +33,7 @@ interface Auth {
   isLoading: boolean;
   isCheckingAuth: boolean;
   message: string | null;
+  clearAuthFeedback: () => void;
   signup: (email: string, password: string, name: string) => Promise<void>;
 }
 
@@ -99,7 +100,7 @@ export const useAuth = create<Auth>((set) => ({
           message: data.message,
         });
       } else {
-        const errorMessage = data?.message || "Error signing up";
+        const errorMessage = data.error;
         set({
           error: errorMessage,
         });
@@ -107,17 +108,13 @@ export const useAuth = create<Auth>((set) => ({
         throw new Error(errorMessage);
       }
     } catch (error) {
-      console.log("error:", error);
       let errorMessage = "Something went wrong";
       if (error instanceof Error) {
-        set({ error: error.message });
-        errorMessage =
-          error.name === "AbortError" ? error.message : "Error signing up";
+        errorMessage = error.message;
         set({ error: errorMessage });
       } else {
         set({ error: errorMessage });
       }
-
       // for the frontend error to skip navigation to verify email
       throw new Error(errorMessage);
     } finally {

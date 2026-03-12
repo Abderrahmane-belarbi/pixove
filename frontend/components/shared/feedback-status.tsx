@@ -3,7 +3,7 @@ import { Text, View } from "react-native";
 
 type FeedbackStatusProps = {
   type: "error" | "success" | "info";
-  message: string;
+  message: string | null;
 };
 
 export function FeedbackStatus({ type, message }: FeedbackStatusProps) {
