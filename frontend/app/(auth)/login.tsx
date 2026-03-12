@@ -165,7 +165,7 @@ export default function Login() {
         </TouchableOpacity>
         <View style={{ flexDirection: "row", gap: 8, alignSelf: "center" }}>
           <Text style={{ fontSize: 14, color: "#71717A" }}>
-            Don't have an account?
+            Don&apos;t have an account?
           </Text>
           <TouchableOpacity onPress={() => router.push("/(auth)/register")}>
             <Text style={{ color: "#BB57A2", fontSize: 14 }}>Sign up</Text>

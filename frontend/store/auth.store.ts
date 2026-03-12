@@ -1,6 +1,6 @@
+import { User } from "@/types";
 import { Platform } from "react-native";
 import { create } from "zustand";
-import { User } from "../../types";
 const API_BASE_URL =
   process.env.EXPO_PUBLIC_API_URL ||
   (Platform.OS === "android"
