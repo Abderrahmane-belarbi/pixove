@@ -71,7 +71,7 @@ export default function Onboarding() {
       return;
     }
 
-    router.replace("/(auth)/login");
+    router.replace("/(auth)/register");
   }, [currentIndex, scrollToSlide]);
 
   const handleDotPress = useCallback(

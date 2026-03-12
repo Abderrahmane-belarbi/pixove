@@ -1,6 +1,7 @@
 import InputField from "@/components/form/input-field";
 import { FeedbackStatus } from "@/components/shared/feedback-status";
 import { useAuth } from "@/store/auth.store";
+import { UserRegister, UserRegisterSchema } from "@/validation/user-register";
 import { AntDesign } from "@expo/vector-icons";
 import MaskedView from "@react-native-masked-view/masked-view";
 import { LinearGradient } from "expo-linear-gradient";
@@ -13,21 +14,47 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import z, { ZodError } from "zod";
 
 export default function Register() {
-  const [registerInput, setRegisterInput] = useState({
+  const [registerInput, setRegisterInput] = useState<UserRegister>({
     name: "",
     email: "",
     password: "",
   });
-
+  const [errors, setErrors] = useState<{
+    email: string | undefined;
+    name: string | undefined;
+    password: string | undefined;
+  }>({
+    email: undefined,
+    name: undefined,
+    password: undefined,
+  });
   const { signup, message, error, isLoading, clearAuthFeedback } = useAuth();
 
   useEffect(() => {
     clearAuthFeedback();
   }, [clearAuthFeedback]);
 
+  type FlatError = Partial<Record<keyof UserRegister, string[]>>;
+  function toFieldsErrors(error: ZodError) {
+    const flat = z.flattenError(error).fieldErrors as FlatError;
+    return {
+      name: flat?.name?.[0],
+      email: flat?.email?.[0],
+      password: flat?.password?.[0],
+    };
+  }
+
   async function handleRegister() {
+    const validate = UserRegisterSchema.safeParse(registerInput);
+    if (!validate.success) {
+      const flatErrors = toFieldsErrors(validate.error);
+      setErrors(flatErrors);
+    }
+    if (!registerInput.email || !registerInput.name || !registerInput.password)
+      return;
     try {
       await signup(
         registerInput.email,
@@ -60,11 +87,15 @@ export default function Register() {
           autoCapitalize="none"
           autoComplete="name"
           iconName="person"
-          onChange={(value) =>
+          onChange={(value) => {
             setRegisterInput((prev) => {
               return { ...prev, name: value };
-            })
-          }
+            });
+            setErrors((prev) => {
+              return { ...prev, name: undefined };
+            });
+          }}
+          error={errors.name}
         />
         <InputField
           label="Email"
@@ -73,11 +104,15 @@ export default function Register() {
           autoCapitalize="none"
           autoComplete="email"
           iconName="mail-outline"
-          onChange={(value) =>
+          onChange={(value) => {
             setRegisterInput((prev) => {
               return { ...prev, email: value };
-            })
-          }
+            });
+            setErrors((prev) => {
+              return { ...prev, email: undefined };
+            });
+          }}
+          error={errors.email}
         />
         <InputField
           label="Password"
@@ -86,12 +121,15 @@ export default function Register() {
           autoCapitalize="none"
           autoComplete="current-password"
           iconName="lock-outline"
-          forLogin={false}
-          onChange={(value) =>
+          onChange={(value) => {
             setRegisterInput((prev) => {
               return { ...prev, password: value };
-            })
-          }
+            });
+            setErrors((prev) => {
+              return { ...prev, password: undefined };
+            });
+          }}
+          error={errors.password}
         />
         {error && <FeedbackStatus type={"error"} message={error} />}
         {message && <FeedbackStatus type={"success"} message={message} />}

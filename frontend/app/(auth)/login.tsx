@@ -1,12 +1,55 @@
 import InputField from "@/components/form/input-field";
+import { useAuth } from "@/store/auth.store";
+import { UserLogin, UserLoginSchema } from "@/validation/user-login";
 import { AntDesign } from "@expo/vector-icons";
 import MaskedView from "@react-native-masked-view/masked-view";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import z, { ZodError } from "zod";
 
 export default function Login() {
-  function handleLogin() {}
+  const [loginInput, setLoginInput] = useState<UserLogin>({
+    email: "",
+    password: "",
+  });
+  const [errors, setErrors] = useState<{
+    email: string | undefined;
+    password: string | undefined;
+  }>({
+    email: undefined,
+    password: undefined,
+  });
+  const { message, error, isLoading, clearAuthFeedback } = useAuth();
+
+  useEffect(() => {
+    clearAuthFeedback();
+  }, [clearAuthFeedback]);
+
+  type FlatError = Partial<Record<keyof UserLogin, string[]>>;
+  function toFieldsErrors(error: ZodError) {
+    const flat = z.flattenError(error).fieldErrors as FlatError;
+    return {
+      email: flat?.email?.[0],
+      password: flat?.password?.[0],
+    };
+  }
+
+  function handleLogin() {
+    const validate = UserLoginSchema.safeParse(loginInput);
+    if (!validate.success) {
+      const flatErrors = toFieldsErrors(validate.error);
+      setErrors(flatErrors);
+    }
+    if (!loginInput.email || !loginInput.password) return;
+  }
   return (
     <View style={styles.container}>
       <MaskedView maskElement={<Text style={styles.logo}>Pixove</Text>}>
@@ -26,6 +69,15 @@ export default function Login() {
           autoCapitalize="none"
           autoComplete="email"
           iconName="mail-outline"
+          onChange={(value) => {
+            setLoginInput((prev) => {
+              return { ...prev, email: value };
+            });
+            setErrors((prev) => {
+              return { ...prev, email: undefined };
+            });
+          }}
+          error={errors.email}
         />
         <InputField
           label="Password"
@@ -34,6 +86,16 @@ export default function Login() {
           autoCapitalize="none"
           autoComplete="current-password"
           iconName="lock-outline"
+          forLogin
+          onChange={(value) => {
+            setLoginInput((prev) => {
+              return { ...prev, password: value };
+            });
+            setErrors((prev) => {
+              return { ...prev, password: undefined };
+            });
+          }}
+          error={errors.password}
         />
         <TouchableOpacity style={styles.button} onPress={handleLogin}>
           <LinearGradient
@@ -42,7 +104,11 @@ export default function Login() {
             end={{ x: 1, y: 0 }}
             style={styles.buttonGradient}
           >
-            <Text style={styles.buttonText}>Sign in</Text>
+            {isLoading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Sign in</Text>
+            )}
           </LinearGradient>
         </TouchableOpacity>
 

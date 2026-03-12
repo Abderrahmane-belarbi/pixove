@@ -19,6 +19,7 @@ type InputFieldProps = {
   autoComplete: AutoComplete;
   forLogin?: boolean;
   onChange: (value: string) => void;
+  error?: string;
 };
 
 export default function InputField({
@@ -28,8 +29,9 @@ export default function InputField({
   autoCapitalize,
   autoComplete,
   iconName,
-  forLogin = true,
+  forLogin = false,
   onChange,
+  error,
 }: InputFieldProps) {
   const [showPassword, setShowPassword] = useState(false);
   return (
@@ -44,6 +46,7 @@ export default function InputField({
         secureTextEntry={label === "Password" && !showPassword}
         onChangeText={(value) => onChange(value)}
       />
+      {error && <Text style={{ color: "#EF4444", fontSize: 12 }}>{error}</Text>}
       {label === "Password" && forLogin && (
         <TouchableOpacity>
           <Text style={styles.forgotPassword}>Forget Password?</Text>
