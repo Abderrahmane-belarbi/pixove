@@ -1,7 +1,8 @@
+import { useAuth } from "@/store/auth.store";
 import MaskedView from "@react-native-masked-view/masked-view";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Dimensions,
   FlatList,
@@ -43,6 +44,12 @@ const onboardingData: OnboardingSlide[] = [
 export default function Onboarding() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList<OnboardingSlide>>(null);
+  const { user, checkAuth } = useAuth();
+
+  useEffect(() => {
+    checkAuth();
+    if (user) router.replace("/(tabs)/home");
+  }, [user, checkAuth]);
 
   const viewabilityConfig = useMemo(
     () => ({

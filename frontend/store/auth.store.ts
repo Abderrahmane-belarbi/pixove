@@ -36,6 +36,7 @@ interface Auth {
   isCheckingAuth: boolean;
   message: string | null;
   clearAuthFeedback: () => void;
+  checkAuth: () => Promise<void>;
   signup: (email: string, password: string, name: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
 }
@@ -53,12 +54,14 @@ export const useAuth = create<Auth>((set) => ({
   },
   checkAuth: async () => {
     set({ isCheckingAuth: true, isAuthenticated: false, error: null });
+    const token = await SecureStore.getItemAsync("accessToken");
     try {
       const res = await fetch(`${API_URL}/check-auth`, {
-        credentials: "include", // critical for cookie-based auth across frontend/backend origins
-        // we need it:
-        // when browser must accept Set-Cookie from backend response like /verify-email, /login
-        // browser must send existing cookie to backend like /check-auth, /logout or any protected routes
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       });
       const data = await res.json();
       if (res.ok) {
