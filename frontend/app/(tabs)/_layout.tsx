@@ -1,8 +1,11 @@
 import { MaterialIcons } from "@expo/vector-icons";
 // @ts-ignore
+import { useAuth } from "@/store/auth.store";
 import MaskedView from "@react-native-masked-view/masked-view";
 import { LinearGradient } from "expo-linear-gradient";
-import { Tabs } from "expo-router";
+import { router, Tabs } from "expo-router";
+import { useEffect } from "react";
+import { ActivityIndicator, View } from "react-native";
 import "react-native-reanimated";
 import "../../global.css";
 
@@ -33,6 +36,28 @@ function TabIcon({ name, focused }: TabIconProps) {
 }
 
 export default function TabsLayout() {
+  const { status } = useAuth();
+
+  useEffect(() => {
+    if (status === "loading") return;
+    if (status === "authenticated") router.replace("/(tabs)/home");
+  }, [status]);
+
+  if (status === "loading") {
+    return (
+      <View
+        style={{
+          flex: 1,
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "#0F0F11",
+        }}
+      >
+        <ActivityIndicator size="small" color="#fff" />
+      </View>
+    );
+  }
+
   return (
     <>
       <Tabs

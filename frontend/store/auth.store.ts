@@ -29,6 +29,7 @@ async function fetchWithTimeout(
 }
 
 interface Auth {
+  status: "loading" | "authenticated" | "unauthenticated";
   user: User | null | undefined;
   isAuthenticated: boolean;
   error: string | null;
@@ -44,6 +45,7 @@ interface Auth {
 export const useAuth = create<Auth>((set) => ({
   user: null,
   isAuthenticated: false,
+  status: "unauthenticated",
   error: null,
   isLoading: false,
   isCheckingAuth: false,
@@ -53,8 +55,18 @@ export const useAuth = create<Auth>((set) => ({
     set({ message: null, error: null });
   },
   checkAuth: async () => {
-    set({ isCheckingAuth: true, isAuthenticated: false, error: null });
+    set({
+      status: "loading",
+      isCheckingAuth: true,
+      isAuthenticated: false,
+      error: null,
+    });
     const token = await SecureStore.getItemAsync("accessToken");
+    if (!token) {
+      set({ status: "unauthenticated" });
+      return;
+    }
+
     try {
       const res = await fetch(`${API_URL}/check-auth`, {
         method: "GET",
@@ -65,12 +77,17 @@ export const useAuth = create<Auth>((set) => ({
       });
       const data = await res.json();
       if (res.ok) {
-        set({ user: data.user, isAuthenticated: true });
+        set({
+          user: data.user,
+          isAuthenticated: true,
+          status: "authenticated",
+        });
         return;
       }
-      set({ user: null });
+      await SecureStore.deleteItemAsync("accessToken"); // we cant find the token then delete the storage of it (key: value)
+      set({ user: null, status: "unauthenticated" });
     } catch (error) {
-      set({ user: null });
+      set({ user: null, status: "unauthenticated" });
       console.log(error);
     } finally {
       set({ isCheckingAuth: false });
@@ -261,6 +278,7 @@ export const useAuth = create<Auth>((set) => ({
           isAuthenticated: false,
           error: null,
         });
+        await SecureStore.deleteItemAsync("accessToken");
       } else {
         const logoutError = data.error;
         set({ error: logoutError });
