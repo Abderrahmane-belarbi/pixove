@@ -1,15 +1,10 @@
 import { useAuth } from "@/store/auth.store";
 import { Settings } from "lucide-react-native";
-import { useEffect } from "react";
 import { Image, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Profile() {
   const { user, checkAuth } = useAuth();
-
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
 
   return (
     <SafeAreaView className="bg-dark-primary h-full">

@@ -45,31 +45,7 @@ const onboardingData: OnboardingSlide[] = [
 export default function Onboarding() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList<OnboardingSlide>>(null);
-  const { user, checkAuth, status } = useAuth();
-
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
-
-  useEffect(() => {
-    if (status === "loading") return;
-    if (status === "authenticated") router.replace("/(tabs)/home");
-  }, [status]);
-
-  if (status === "loading") {
-    return (
-      <View
-        style={{
-          flex: 1,
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "#0F0F11",
-        }}
-      >
-        <ActivityIndicator size="small" color="#fff" />
-      </View>
-    );
-  }
+  const { checkAuth, status } = useAuth();
 
   const viewabilityConfig = useMemo(
     () => ({
@@ -109,6 +85,30 @@ export default function Onboarding() {
     },
     [currentIndex, scrollToSlide],
   );
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
+  useEffect(() => {
+    if (status === "loading") return;
+    if (status === "authenticated") router.replace("/(tabs)/home");
+  }, [status]);
+
+  if (status === "loading") {
+    return (
+      <View
+        style={{
+          flex: 1,
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "#0F0F11",
+        }}
+      >
+        <ActivityIndicator size="small" color="#fff" />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
