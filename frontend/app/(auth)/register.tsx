@@ -52,6 +52,7 @@ export default function Register() {
     if (!validate.success) {
       const flatErrors = toFieldsErrors(validate.error);
       setErrors(flatErrors);
+      return;
     }
     if (!registerInput.email || !registerInput.name || !registerInput.password)
       return;

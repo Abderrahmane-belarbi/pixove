@@ -1,6 +1,8 @@
 import { User } from "@/types";
+import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 import { create } from "zustand";
+
 const API_BASE_URL =
   process.env.EXPO_PUBLIC_API_URL ||
   (Platform.OS === "android"
@@ -35,6 +37,7 @@ interface Auth {
   message: string | null;
   clearAuthFeedback: () => void;
   signup: (email: string, password: string, name: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
 }
 
 export const useAuth = create<Auth>((set) => ({
@@ -206,10 +209,6 @@ export const useAuth = create<Auth>((set) => ({
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include", // critical for cookie-based auth across frontend/backend origins
-        // we need it:
-        // when browser must accept Set-Cookie from backend response like /verify-email, /login
-        // browser must send existing cookie to backend like /check-auth, /logout or any protected routes
         body: JSON.stringify({
           email,
           password,
@@ -223,6 +222,10 @@ export const useAuth = create<Auth>((set) => ({
           isAuthenticated: true,
           error: null,
         });
+        await SecureStore.setItemAsync("accessToken", data.accessToken);
+        // for checking
+        const token = await SecureStore.getItemAsync("accessToken");
+        console.log("Token from save:", token);
       } else {
         const loginError = data.error;
         set({ error: loginError });

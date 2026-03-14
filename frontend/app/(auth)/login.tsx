@@ -1,4 +1,5 @@
 import InputField from "@/components/form/input-field";
+import { FeedbackStatus } from "@/components/shared/feedback-status";
 import { useAuth } from "@/store/auth.store";
 import { UserLogin, UserLoginSchema } from "@/validation/user-login";
 import { AntDesign } from "@expo/vector-icons";
@@ -27,7 +28,7 @@ export default function Login() {
     email: undefined,
     password: undefined,
   });
-  const { message, error, isLoading, clearAuthFeedback } = useAuth();
+  const { message, error, isLoading, login, clearAuthFeedback } = useAuth();
 
   useEffect(() => {
     clearAuthFeedback();
@@ -42,13 +43,22 @@ export default function Login() {
     };
   }
 
-  function handleLogin() {
+  async function handleLogin() {
     const validate = UserLoginSchema.safeParse(loginInput);
     if (!validate.success) {
       const flatErrors = toFieldsErrors(validate.error);
       setErrors(flatErrors);
+      return;
     }
     if (!loginInput.email || !loginInput.password) return;
+    try {
+      await login(validate.data?.email!, validate.data?.password!);
+      setTimeout(() => {
+        router.replace("/(tabs)/home");
+      }, 1000);
+    } catch (error) {
+      console.log(error);
+    }
   }
   return (
     <View style={styles.container}>
@@ -97,6 +107,8 @@ export default function Login() {
           }}
           error={errors.password}
         />
+        {error && <FeedbackStatus type={"error"} message={error} />}
+        {message && <FeedbackStatus type={"success"} message={message} />}
         <TouchableOpacity style={styles.button} onPress={handleLogin}>
           <LinearGradient
             colors={["#7C3AED", "#F97316"]}

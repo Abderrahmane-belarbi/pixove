@@ -4,7 +4,7 @@ import { Request, Response } from "express";
 import { OAuth2Client } from "google-auth-library";
 import { sendMail } from "../config/google-mailer";
 import User from "../models/User";
-import { generateTokenSetCookie } from "../utils/generate-token-cookie";
+import { generateToken } from "../utils/generate-token";
 import {
   generateVerificationToken,
   generateVerificationTokenExpiresAt,
@@ -126,7 +126,7 @@ export async function googleCallbackHandler(req: Request, res: Response) {
       }
       await user.save();
     }
-    generateTokenSetCookie(res, user._id);
+    generateToken(user._id);
     const redirectUrl = `${process.env.NODE_ENV === "development" ? process.env.LOCAL_CLIENT_URL : process.env.PUBLIC_CLIENT_URL}/dashboard`;
     return res.redirect(redirectUrl);
   } catch (error) {
@@ -202,7 +202,7 @@ export async function login(req: Request, res: Response) {
       return res.status(400).json({ error: "Invalid credentials" });
 
     // jwt
-    generateTokenSetCookie(res, user._id);
+    const token = generateToken(user._id);
 
     return res.status(200).json({
       message: "User Logged in successfully",
@@ -212,6 +212,7 @@ export async function login(req: Request, res: Response) {
         email: user.email,
         isVerified: user.isVerified,
       },
+      accessToken: token,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
@@ -313,7 +314,7 @@ export async function verificationEmail(req: Request, res: Response) {
     await user.save();
 
     // jwt
-    generateTokenSetCookie(res, user._id);
+    generateToken(user._id);
 
     return res.status(200).json({
       message: "The email has been verified successfully",
