@@ -40,6 +40,7 @@ interface Auth {
   checkAuth: () => Promise<void>;
   signup: (email: string, password: string, name: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 export const useAuth = create<Auth>((set) => ({
@@ -261,14 +262,10 @@ export const useAuth = create<Auth>((set) => ({
     }
   },
   logout: async () => {
-    set({ isLoading: true, error: null, message: null });
+    set({ isLoading: true, error: null, message: null, status: "loading" });
     try {
       const res = await fetch(`${API_URL}/logout`, {
         method: "POST",
-        credentials: "include", // critical for cookie-based auth across frontend/backend origins
-        // we need it:
-        // when browser must accept Set-Cookie from backend response like /verify-email, /login
-        // browser must send existing cookie to backend like /check-auth, /logout or any protected routes
       });
       const data = await res.json();
       if (res.ok) {
@@ -279,6 +276,7 @@ export const useAuth = create<Auth>((set) => ({
           error: null,
         });
         await SecureStore.deleteItemAsync("accessToken");
+        set({ status: "unauthenticated" });
       } else {
         const logoutError = data.error;
         set({ error: logoutError });
