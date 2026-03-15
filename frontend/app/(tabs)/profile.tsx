@@ -153,6 +153,9 @@ export default function Profile() {
         </View>
         {/* Video Grid */}
         <View></View>
+        <TouchableOpacity onPress={handleLogout}>
+          <Text style={{ color: "#ccc" }}>Logout</Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );

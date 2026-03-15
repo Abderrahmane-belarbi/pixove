@@ -40,7 +40,7 @@ export default function TabsLayout() {
 
   useEffect(() => {
     if (status === "loading") return;
-    if (status === "authenticated") router.replace("/(tabs)/home");
+    if (status === "unauthenticated") router.replace("/(auth)/login");
   }, [status]);
 
   if (status === "loading") {

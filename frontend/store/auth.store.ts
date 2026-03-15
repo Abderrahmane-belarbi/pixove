@@ -1,14 +1,9 @@
 import { User } from "@/types";
 import * as SecureStore from "expo-secure-store";
-import { Platform } from "react-native";
 import { create } from "zustand";
 
 const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL ||
-  (Platform.OS === "android"
-    ? "http://10.67.124.79:5000"
-    : "http://localhost:5000");
-
+  process.env.EXPO_PUBLIC_API_URL || "http://10.67.124.79:5000";
 const API_URL = `${API_BASE_URL}/api/auth`;
 
 const REQUEST_TIMEOUT_MS = 15000;
@@ -31,10 +26,7 @@ async function fetchWithTimeout(
 interface Auth {
   status: "loading" | "authenticated" | "unauthenticated";
   user: User | null | undefined;
-  isAuthenticated: boolean;
   error: string | null;
-  isLoading: boolean;
-  isCheckingAuth: boolean;
   message: string | null;
   clearAuthFeedback: () => void;
   checkAuth: () => Promise<void>;
@@ -45,11 +37,8 @@ interface Auth {
 
 export const useAuth = create<Auth>((set) => ({
   user: null,
-  isAuthenticated: false,
   status: "unauthenticated",
   error: null,
-  isLoading: false,
-  isCheckingAuth: false,
   message: null,
 
   clearAuthFeedback: () => {
@@ -58,8 +47,6 @@ export const useAuth = create<Auth>((set) => ({
   checkAuth: async () => {
     set({
       status: "loading",
-      isCheckingAuth: true,
-      isAuthenticated: false,
       error: null,
     });
     const token = await SecureStore.getItemAsync("accessToken");
@@ -80,7 +67,6 @@ export const useAuth = create<Auth>((set) => ({
       if (res.ok) {
         set({
           user: data.user,
-          isAuthenticated: true,
           status: "authenticated",
         });
         return;
@@ -90,12 +76,10 @@ export const useAuth = create<Auth>((set) => ({
     } catch (error) {
       set({ user: null, status: "unauthenticated" });
       console.log(error);
-    } finally {
-      set({ isCheckingAuth: false });
     }
   },
   googleSign: async () => {
-    set({ isLoading: true, error: null, message: null });
+    set({ status: "loading", error: null, message: null });
     try {
       window.location.href = `${API_URL}/google`;
     } catch (error) {
@@ -105,11 +89,11 @@ export const useAuth = create<Auth>((set) => ({
         set({ error: "Something went wrong" });
       }
     } finally {
-      set({ isLoading: false });
+      set({ status: "unauthenticated" });
     }
   },
   signup: async (email: string, password: string, name: string) => {
-    set({ isLoading: true, error: null, message: null });
+    set({ status: "loading", error: null, message: null });
     try {
       const res = await fetchWithTimeout(`${API_URL}/signup`, {
         method: "POST",
@@ -120,14 +104,10 @@ export const useAuth = create<Auth>((set) => ({
       });
       const data = await res.json();
       if (res.ok) {
-        set({
-          message: data.message,
-        });
+        set({ message: data.message });
       } else {
         const errorMessage = data.error;
-        set({
-          error: errorMessage,
-        });
+        set({ error: errorMessage });
         // for the frontend error to skip navigation to verify email
         throw new Error(errorMessage);
       }
@@ -142,11 +122,11 @@ export const useAuth = create<Auth>((set) => ({
       // for the frontend error to skip navigation to verify email
       throw new Error(errorMessage);
     } finally {
-      set({ isLoading: false });
+      set({ status: "unauthenticated" });
     }
   },
   resendVerificationEmail: async (email: string) => {
-    set({ isLoading: true, error: null, message: null });
+    set({ status: "loading", error: null, message: null });
     try {
       if (!email) {
         const noEmailError =
@@ -180,11 +160,11 @@ export const useAuth = create<Auth>((set) => ({
       }
       throw new Error(errorMessage);
     } finally {
-      set({ isLoading: false });
+      set({ status: "unauthenticated" });
     }
   },
   verifyEmail: async (code: string, email: string) => {
-    set({ isLoading: true, error: null, message: null });
+    set({ status: "loading", error: null, message: null });
     try {
       if (!email) {
         const noEmailError =
@@ -205,25 +185,27 @@ export const useAuth = create<Auth>((set) => ({
       });
       const data = await res.json();
       if (res.ok) {
-        set({ isAuthenticated: true, message: data.message, user: data.user });
+        set({
+          status: "authenticated",
+          message: data.message,
+          user: data.user,
+        });
       } else if (res.status === 410) {
-        set({ isAuthenticated: true, message: data.message, error: null });
+        set({ status: "authenticated", message: data.message, error: null });
       } else {
-        set({ error: data.message, isAuthenticated: false });
+        set({ error: data.message, status: "unauthenticated" });
         throw new Error(data.message);
       }
       return data;
     } catch (error) {
       if (error instanceof Error) {
-        set({ error: error.message, isAuthenticated: false });
+        set({ error: error.message, status: "unauthenticated" });
         throw new Error(error.message);
       }
-    } finally {
-      set({ isLoading: false });
     }
   },
   login: async (email: string, password: string) => {
-    set({ isLoading: true, error: null, message: null });
+    set({ status: "loading", error: null, message: null });
     try {
       const res = await fetch(`${API_URL}/login`, {
         method: "POST",
@@ -240,43 +222,37 @@ export const useAuth = create<Auth>((set) => ({
         set({
           user: data.user,
           message: data.message,
-          isAuthenticated: true,
+          status: "authenticated",
           error: null,
         });
         await SecureStore.setItemAsync("accessToken", data.accessToken);
-        // for checking
-        const token = await SecureStore.getItemAsync("accessToken");
-        console.log("Token from save:", token);
       } else {
         const loginError = data.error;
-        set({ error: loginError });
+        set({ error: loginError, status: "unauthenticated" });
         throw new Error(loginError);
       }
     } catch (error) {
       if (error instanceof Error) {
-        set({ error: error.message });
+        set({ error: error.message, status: "unauthenticated" });
         throw new Error(error.message);
       }
-    } finally {
-      set({ isLoading: false });
     }
   },
   logout: async () => {
-    set({ isLoading: true, error: null, message: null, status: "loading" });
+    set({ error: null, message: null, status: "loading" });
     try {
       const res = await fetch(`${API_URL}/logout`, {
         method: "POST",
       });
       const data = await res.json();
+      // TODO: deleting Refresh token from the database
       if (res.ok) {
         set({
           user: null,
           message: data.message,
-          isAuthenticated: false,
           error: null,
         });
         await SecureStore.deleteItemAsync("accessToken");
-        set({ status: "unauthenticated" });
       } else {
         const logoutError = data.error;
         set({ error: logoutError });
@@ -288,11 +264,11 @@ export const useAuth = create<Auth>((set) => ({
         throw new Error(error.message);
       }
     } finally {
-      set({ isLoading: false });
+      set({ status: "unauthenticated" });
     }
   },
   forgotPassword: async (email: string) => {
-    set({ isLoading: true, error: null, message: null });
+    set({ status: "loading", error: null, message: null });
     try {
       const res = await fetch(`${API_URL}/forgot-password`, {
         method: "POST",
@@ -315,11 +291,11 @@ export const useAuth = create<Auth>((set) => ({
         throw error;
       }
     } finally {
-      set({ isLoading: false });
+      set({ status: "unauthenticated" });
     }
   },
   resetPassword: async (token: string, password: string) => {
-    set({ isLoading: true, error: null, message: null });
+    set({ status: "loading", error: null, message: null });
     try {
       const res = await fetch(`${API_URL}/reset-password/${token}`, {
         method: "POST",
@@ -342,11 +318,11 @@ export const useAuth = create<Auth>((set) => ({
         throw error;
       }
     } finally {
-      set({ isLoading: false });
+      set({ status: "unauthenticated" });
     }
   },
   updateProfile: async (input: any) => {
-    set({ isLoading: true, error: null, message: null });
+    set({ status: "loading", error: null, message: null });
     try {
       const res = await fetch(`${API_URL}/update-profile`, {
         method: "PUT",
@@ -368,7 +344,7 @@ export const useAuth = create<Auth>((set) => ({
         throw error;
       }
     } finally {
-      set({ isLoading: false });
+      set({ status: "authenticated" });
     }
   },
 }));

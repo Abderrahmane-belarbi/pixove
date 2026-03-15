@@ -165,7 +165,6 @@ export async function signup(req: Request, res: Response) {
       return res.status(500).json({ error: "Failed to create user" });
     }
 
-    // Don't block signup response on external SMTP/provider availability.
     //sendMail({
     //  to: createdUser.email,
     //  subject: "Verify your email",
@@ -210,7 +209,9 @@ export async function login(req: Request, res: Response) {
         _id: user._id,
         name: user.name,
         email: user.email,
-        isVerified: user.isVerified,
+        bio: user.bio,
+        picture: user?.picture,
+        isVerified: user?.isVerified,
       },
       accessToken: token,
     });
@@ -221,8 +222,13 @@ export async function login(req: Request, res: Response) {
 }
 
 export function logout(req: Request, res: Response) {
-  res.clearCookie("token");
-  res.status(200).json({ message: "Logged out successfully" });
+  try {
+    // TODO: deleting Refresh token from the database
+    res.status(200).json({ message: "Logged out successfully" });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return res.status(500).json({ error: message });
+  }
 }
 
 export async function resendVerificationEmail(req: Request, res: Response) {

@@ -28,7 +28,7 @@ export default function Login() {
     email: undefined,
     password: undefined,
   });
-  const { message, error, isLoading, login, clearAuthFeedback } = useAuth();
+  const { message, error, status, login, clearAuthFeedback } = useAuth();
 
   useEffect(() => {
     clearAuthFeedback();
@@ -116,7 +116,7 @@ export default function Login() {
             end={{ x: 1, y: 0 }}
             style={styles.buttonGradient}
           >
-            {isLoading ? (
+            {status === "loading" ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
               <Text style={styles.buttonText}>Sign in</Text>
