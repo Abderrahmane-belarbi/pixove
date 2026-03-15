@@ -301,7 +301,12 @@ export async function verificationEmail(req: Request, res: Response) {
     if (!user) return res.status(400).json({ message: "Please Signup first" });
 
     if (user.isVerified)
-      return res.status(410).json({ message: "Email already verified" });
+      return res
+        .status(410)
+        .json({
+          message: "Email already verified",
+          code: "EMAIL_ALREADY_VERIFIED",
+        });
 
     if (!user.verificationToken || !user.verificationTokenExpiresAt) {
       return res.status(400).json({ message: "No active verification token" });
@@ -320,7 +325,7 @@ export async function verificationEmail(req: Request, res: Response) {
     await user.save();
 
     // jwt
-    generateToken(user._id);
+    const token = generateToken(user._id);
 
     return res.status(200).json({
       message: "The email has been verified successfully",
@@ -330,6 +335,7 @@ export async function verificationEmail(req: Request, res: Response) {
         email: user.email,
         isVerified: user.isVerified,
       },
+      accessToken: token,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";

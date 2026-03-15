@@ -173,7 +173,6 @@ export const useAuth = create<Auth>((set) => ({
         throw new Error(noEmailError);
       }
       const res = await fetch(`${API_URL}/verify-email`, {
-        credentials: "include", // critical for cookie-based auth across frontend/backend origins
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -186,22 +185,23 @@ export const useAuth = create<Auth>((set) => ({
       const data = await res.json();
       if (res.ok) {
         set({
-          status: "authenticated",
           message: data.message,
           user: data.user,
         });
-      } else if (res.status === 410) {
-        set({ status: "authenticated", message: data.message, error: null });
+      } else if (data.code === "EMAIL_ALREADY_VERIFIED") {
+        set({ message: data.message, error: null });
       } else {
-        set({ error: data.message, status: "unauthenticated" });
+        set({ error: data.message });
         throw new Error(data.message);
       }
       return data;
     } catch (error) {
       if (error instanceof Error) {
-        set({ error: error.message, status: "unauthenticated" });
+        set({ error: error.message });
         throw new Error(error.message);
       }
+    } finally {
+      set({ status: "unauthenticated" });
     }
   },
   login: async (email: string, password: string) => {
