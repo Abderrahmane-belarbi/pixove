@@ -4,7 +4,10 @@ import User from "../models/User";
 export default async function updateProfile(req: Request, res: Response) {
   try {
     const userId = req.userId;
-    if (!userId) return res.status(401).json({ error: "User unauthorized." });
+    if (!userId)
+      return res
+        .status(401)
+        .json({ error: "User unauthorized.", code: "AUTH_USER_UNAUTHORIZED" });
 
     const allowedFields = ["name", "phone", "location", "birthDate", "bio"];
     let updates: Record<string, string> = {};
@@ -19,7 +22,10 @@ export default async function updateProfile(req: Request, res: Response) {
       { $set: updates }, // update
       { returnDocument: "after" }, // return updated document
     );
-    if (!user) return res.status(404).json({ error: "User not found." });
+    if (!user)
+      return res
+        .status(404)
+        .json({ error: "User not found.", code: "AUTH_USER_NOT_FOUND" });
     return res
       .status(200)
       .json({ message: "Your changes have been saved successfully.", user });

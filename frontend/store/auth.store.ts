@@ -323,28 +323,36 @@ export const useAuth = create<Auth>((set) => ({
   },
   updateProfile: async (input: any) => {
     set({ status: "loading", error: null, message: null });
+    const token = await SecureStore.getItemAsync("accessToken");
+    if (!token) {
+      set({ status: "unauthenticated" });
+      return;
+    }
     try {
       const res = await fetch(`${API_URL}/update-profile`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         credentials: "include",
         body: JSON.stringify(input),
       });
       const data = await res.json();
       if (!res.ok) {
+        data.code === "AUTH_USER_NOT_FOUND" ||
+        data.code === "AUTH_USER_UNAUTHORIZED"
+          ? set({ status: "unauthenticated" })
+          : set({ status: "authenticated" });
         set({ error: data.error });
         throw new Error(data.error);
       }
-      set({ message: data.message, user: data.user });
+      set({ message: data.message, user: data.user, status: "authenticated" });
     } catch (error) {
       if (error instanceof Error) {
         set({ error: error.message });
         throw error;
       }
-    } finally {
-      set({ status: "authenticated" });
     }
   },
 }));
