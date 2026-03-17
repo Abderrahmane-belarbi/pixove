@@ -134,7 +134,11 @@ export default function Register() {
         />
         {error && <FeedbackStatus type={"error"} message={error} />}
         {message && <FeedbackStatus type={"success"} message={message} />}
-        <TouchableOpacity style={styles.button} onPress={handleRegister}>
+        <TouchableOpacity
+          disabled={isLoading}
+          style={styles.button}
+          onPress={handleRegister}
+        >
           <LinearGradient
             colors={["#7C3AED", "#F97316"]}
             start={{ x: 0, y: 0 }}

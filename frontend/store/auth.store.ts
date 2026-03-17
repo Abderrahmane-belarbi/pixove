@@ -3,7 +3,7 @@ import * as SecureStore from "expo-secure-store";
 import { create } from "zustand";
 
 const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL || "http://10.67.124.79:5000";
+  process.env.EXPO_PUBLIC_API_URL || "http://172.20.108.79:5000";
 const API_URL = `${API_BASE_URL}/api/auth`;
 
 const REQUEST_TIMEOUT_MS = 15000;

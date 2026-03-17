@@ -28,7 +28,7 @@ export default function Login() {
     email: undefined,
     password: undefined,
   });
-  const { message, error, status, login, clearAuthFeedback } = useAuth();
+  const { message, error, isLoading, login, clearAuthFeedback } = useAuth();
 
   useEffect(() => {
     clearAuthFeedback();
@@ -109,14 +109,18 @@ export default function Login() {
         />
         {error && <FeedbackStatus type={"error"} message={error} />}
         {message && <FeedbackStatus type={"success"} message={message} />}
-        <TouchableOpacity style={styles.button} onPress={handleLogin}>
+        <TouchableOpacity
+          disabled={isLoading}
+          style={styles.button}
+          onPress={handleLogin}
+        >
           <LinearGradient
             colors={["#7C3AED", "#F97316"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.buttonGradient}
           >
-            {status === "loading" ? (
+            {isLoading ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
               <Text style={styles.buttonText}>Sign in</Text>
