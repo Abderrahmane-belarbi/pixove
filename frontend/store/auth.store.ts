@@ -25,7 +25,7 @@ async function fetchWithTimeout(
 
 interface Auth {
   status: "authenticated" | "unauthenticated";
-  loading: boolean;
+  isLoading: boolean;
   user: User | null;
   error: string | null;
   message: string | null;
@@ -38,7 +38,7 @@ interface Auth {
 
 export const useAuth = create<Auth>((set) => ({
   user: null,
-  loading: false,
+  isLoading: false,
   status: "unauthenticated",
   error: null,
   message: null,
@@ -47,7 +47,7 @@ export const useAuth = create<Auth>((set) => ({
     set({ message: null, error: null });
   },
   checkAuth: async () => {
-    set({ loading: true, error: null });
+    set({ isLoading: true, error: null });
     const token = await SecureStore.getItemAsync("accessToken");
     if (!token) {
       set({ status: "unauthenticated" });
@@ -75,11 +75,11 @@ export const useAuth = create<Auth>((set) => ({
       set({ user: null, status: "unauthenticated" });
       console.log(error);
     } finally {
-      set({ loading: false });
+      set({ isLoading: false });
     }
   },
   googleSign: async () => {
-    set({ loading: true, error: null, message: null });
+    set({ isLoading: true, error: null, message: null });
     try {
       window.location.href = `${API_URL}/google`;
     } catch (error) {
@@ -89,11 +89,11 @@ export const useAuth = create<Auth>((set) => ({
         set({ error: "Something went wrong" });
       }
     } finally {
-      set({ loading: false });
+      set({ isLoading: false });
     }
   },
   signup: async (email: string, password: string, name: string) => {
-    set({ loading: true, error: null, message: null });
+    set({ isLoading: true, error: null, message: null });
     try {
       const res = await fetchWithTimeout(`${API_URL}/signup`, {
         method: "POST",
@@ -122,11 +122,11 @@ export const useAuth = create<Auth>((set) => ({
       // for the frontend error to skip navigation to verify email
       throw new Error(errorMessage);
     } finally {
-      set({ loading: false });
+      set({ isLoading: false });
     }
   },
   resendVerificationEmail: async (email: string) => {
-    set({ loading: true, error: null, message: null });
+    set({ isLoading: true, error: null, message: null });
     try {
       if (!email) {
         const noEmailError =
@@ -160,11 +160,11 @@ export const useAuth = create<Auth>((set) => ({
       }
       throw new Error(errorMessage);
     } finally {
-      set({ loading: false });
+      set({ isLoading: false });
     }
   },
   verifyEmail: async (code: string, email: string) => {
-    set({ loading: true, error: null, message: null });
+    set({ isLoading: true, error: null, message: null });
     try {
       if (!email) {
         const noEmailError =
@@ -198,11 +198,11 @@ export const useAuth = create<Auth>((set) => ({
         throw new Error(error.message);
       }
     } finally {
-      set({ loading: false });
+      set({ isLoading: false });
     }
   },
   login: async (email: string, password: string) => {
-    set({ loading: true, error: null, message: null });
+    set({ isLoading: true, error: null, message: null });
     try {
       const res = await fetch(`${API_URL}/login`, {
         method: "POST",
@@ -234,11 +234,11 @@ export const useAuth = create<Auth>((set) => ({
         throw new Error(error.message);
       }
     } finally {
-      set({ loading: false });
+      set({ isLoading: false });
     }
   },
   logout: async () => {
-    set({ error: null, message: null, loading: true });
+    set({ error: null, message: null, isLoading: true });
     try {
       const res = await fetch(`${API_URL}/logout`, {
         method: "POST",
@@ -264,11 +264,11 @@ export const useAuth = create<Auth>((set) => ({
         throw new Error(error.message);
       }
     } finally {
-      set({ loading: false });
+      set({ isLoading: false });
     }
   },
   forgotPassword: async (email: string) => {
-    set({ loading: true, error: null, message: null });
+    set({ isLoading: true, error: null, message: null });
     try {
       const res = await fetch(`${API_URL}/forgot-password`, {
         method: "POST",
@@ -291,11 +291,11 @@ export const useAuth = create<Auth>((set) => ({
         throw error;
       }
     } finally {
-      set({ loading: false });
+      set({ isLoading: false });
     }
   },
   resetPassword: async (token: string, password: string) => {
-    set({ loading: true, error: null, message: null });
+    set({ isLoading: true, error: null, message: null });
     try {
       const res = await fetch(`${API_URL}/reset-password/${token}`, {
         method: "POST",
@@ -318,11 +318,11 @@ export const useAuth = create<Auth>((set) => ({
         throw error;
       }
     } finally {
-      set({ loading: false });
+      set({ isLoading: false });
     }
   },
   updateProfile: async (input: any) => {
-    set({ loading: true, error: null, message: null });
+    set({ isLoading: true, error: null, message: null });
     const token = await SecureStore.getItemAsync("accessToken");
     if (!token) {
       set({ status: "unauthenticated" });
@@ -358,7 +358,7 @@ export const useAuth = create<Auth>((set) => ({
         throw error;
       }
     } finally {
-      set({ loading: false });
+      set({ isLoading: false });
     }
   },
 }));
