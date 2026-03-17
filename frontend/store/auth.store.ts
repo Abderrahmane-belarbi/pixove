@@ -24,8 +24,9 @@ async function fetchWithTimeout(
 }
 
 interface Auth {
-  status: "loading" | "authenticated" | "unauthenticated";
-  user: User | null | undefined;
+  status: "authenticated" | "unauthenticated";
+  loading: boolean;
+  user: User | null;
   error: string | null;
   message: string | null;
   clearAuthFeedback: () => void;
@@ -37,6 +38,7 @@ interface Auth {
 
 export const useAuth = create<Auth>((set) => ({
   user: null,
+  loading: false,
   status: "unauthenticated",
   error: null,
   message: null,
@@ -45,16 +47,12 @@ export const useAuth = create<Auth>((set) => ({
     set({ message: null, error: null });
   },
   checkAuth: async () => {
-    set({
-      status: "loading",
-      error: null,
-    });
+    set({ loading: true, error: null });
     const token = await SecureStore.getItemAsync("accessToken");
     if (!token) {
       set({ status: "unauthenticated" });
       return;
     }
-
     try {
       const res = await fetch(`${API_URL}/check-auth`, {
         method: "GET",
@@ -76,10 +74,12 @@ export const useAuth = create<Auth>((set) => ({
     } catch (error) {
       set({ user: null, status: "unauthenticated" });
       console.log(error);
+    } finally {
+      set({ loading: false });
     }
   },
   googleSign: async () => {
-    set({ status: "loading", error: null, message: null });
+    set({ loading: true, error: null, message: null });
     try {
       window.location.href = `${API_URL}/google`;
     } catch (error) {
@@ -89,11 +89,11 @@ export const useAuth = create<Auth>((set) => ({
         set({ error: "Something went wrong" });
       }
     } finally {
-      set({ status: "unauthenticated" });
+      set({ loading: false });
     }
   },
   signup: async (email: string, password: string, name: string) => {
-    set({ status: "loading", error: null, message: null });
+    set({ loading: true, error: null, message: null });
     try {
       const res = await fetchWithTimeout(`${API_URL}/signup`, {
         method: "POST",
@@ -122,11 +122,11 @@ export const useAuth = create<Auth>((set) => ({
       // for the frontend error to skip navigation to verify email
       throw new Error(errorMessage);
     } finally {
-      set({ status: "unauthenticated" });
+      set({ loading: false });
     }
   },
   resendVerificationEmail: async (email: string) => {
-    set({ status: "loading", error: null, message: null });
+    set({ loading: true, error: null, message: null });
     try {
       if (!email) {
         const noEmailError =
@@ -160,11 +160,11 @@ export const useAuth = create<Auth>((set) => ({
       }
       throw new Error(errorMessage);
     } finally {
-      set({ status: "unauthenticated" });
+      set({ loading: false });
     }
   },
   verifyEmail: async (code: string, email: string) => {
-    set({ status: "loading", error: null, message: null });
+    set({ loading: true, error: null, message: null });
     try {
       if (!email) {
         const noEmailError =
@@ -184,10 +184,7 @@ export const useAuth = create<Auth>((set) => ({
       });
       const data = await res.json();
       if (res.ok) {
-        set({
-          message: data.message,
-          user: data.user,
-        });
+        set({ message: data.message });
       } else if (data.code === "EMAIL_ALREADY_VERIFIED") {
         set({ message: data.message, error: null });
       } else {
@@ -201,11 +198,11 @@ export const useAuth = create<Auth>((set) => ({
         throw new Error(error.message);
       }
     } finally {
-      set({ status: "unauthenticated" });
+      set({ loading: false });
     }
   },
   login: async (email: string, password: string) => {
-    set({ status: "loading", error: null, message: null });
+    set({ loading: true, error: null, message: null });
     try {
       const res = await fetch(`${API_URL}/login`, {
         method: "POST",
@@ -236,10 +233,12 @@ export const useAuth = create<Auth>((set) => ({
         set({ error: error.message, status: "unauthenticated" });
         throw new Error(error.message);
       }
+    } finally {
+      set({ loading: false });
     }
   },
   logout: async () => {
-    set({ error: null, message: null, status: "loading" });
+    set({ error: null, message: null, loading: true });
     try {
       const res = await fetch(`${API_URL}/logout`, {
         method: "POST",
@@ -249,6 +248,7 @@ export const useAuth = create<Auth>((set) => ({
       if (res.ok) {
         set({
           user: null,
+          status: "unauthenticated",
           message: data.message,
           error: null,
         });
@@ -264,11 +264,11 @@ export const useAuth = create<Auth>((set) => ({
         throw new Error(error.message);
       }
     } finally {
-      set({ status: "unauthenticated" });
+      set({ loading: false });
     }
   },
   forgotPassword: async (email: string) => {
-    set({ status: "loading", error: null, message: null });
+    set({ loading: true, error: null, message: null });
     try {
       const res = await fetch(`${API_URL}/forgot-password`, {
         method: "POST",
@@ -291,11 +291,11 @@ export const useAuth = create<Auth>((set) => ({
         throw error;
       }
     } finally {
-      set({ status: "unauthenticated" });
+      set({ loading: false });
     }
   },
   resetPassword: async (token: string, password: string) => {
-    set({ status: "loading", error: null, message: null });
+    set({ loading: true, error: null, message: null });
     try {
       const res = await fetch(`${API_URL}/reset-password/${token}`, {
         method: "POST",
@@ -318,11 +318,11 @@ export const useAuth = create<Auth>((set) => ({
         throw error;
       }
     } finally {
-      set({ status: "unauthenticated" });
+      set({ loading: false });
     }
   },
   updateProfile: async (input: any) => {
-    set({ status: "loading", error: null, message: null });
+    set({ loading: true, error: null, message: null });
     const token = await SecureStore.getItemAsync("accessToken");
     if (!token) {
       set({ status: "unauthenticated" });
@@ -335,15 +335,19 @@ export const useAuth = create<Auth>((set) => ({
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        credentials: "include",
         body: JSON.stringify(input),
       });
       const data = await res.json();
       if (!res.ok) {
-        data.code === "AUTH_USER_NOT_FOUND" ||
-        data.code === "AUTH_USER_UNAUTHORIZED"
-          ? set({ status: "unauthenticated" })
-          : set({ status: "authenticated" });
+        if (
+          data.code === "AUTH_USER_NOT_FOUND" ||
+          data.code === "AUTH_USER_UNAUTHORIZED"
+        ) {
+          set({ status: "unauthenticated" });
+          await SecureStore.deleteItemAsync("accessToken");
+        } else {
+          set({ status: "authenticated" });
+        }
         set({ error: data.error });
         throw new Error(data.error);
       }
@@ -353,6 +357,8 @@ export const useAuth = create<Auth>((set) => ({
         set({ error: error.message });
         throw error;
       }
+    } finally {
+      set({ loading: false });
     }
   },
 }));
