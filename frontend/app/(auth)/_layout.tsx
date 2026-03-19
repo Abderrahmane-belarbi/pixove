@@ -6,14 +6,14 @@ import "react-native-reanimated";
 import "../../global.css";
 
 export default function AuthLayout() {
-  const { status } = useAuth();
+  const { status, isLoading } = useAuth();
 
   useEffect(() => {
-    if (status === "loading") return;
+    if (isLoading) return;
     if (status === "authenticated") router.replace("/(tabs)/home");
   }, [status]);
 
-  if (status === "loading") {
+  if (isLoading) {
     return (
       <View
         style={{

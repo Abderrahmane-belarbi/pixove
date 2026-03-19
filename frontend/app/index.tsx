@@ -45,7 +45,7 @@ const onboardingData: OnboardingSlide[] = [
 export default function Onboarding() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList<OnboardingSlide>>(null);
-  const { checkAuth, status } = useAuth();
+  const { checkAuth, status, isLoading } = useAuth();
 
   const viewabilityConfig = useMemo(
     () => ({
@@ -87,15 +87,16 @@ export default function Onboarding() {
   );
 
   useEffect(() => {
-    checkAuth();
+    router.replace("/(tabs)/home");
+    //checkAuth();
   }, [checkAuth]);
 
   useEffect(() => {
-    if (status === "loading") return;
-    if (status === "authenticated") router.replace("/(tabs)/home");
+    //if (isLoading) return;
+    //if (status === "authenticated") router.replace("/(tabs)/home");
   }, [status]);
 
-  if (status === "loading") {
+  if (isLoading) {
     return (
       <View
         style={{
