@@ -44,7 +44,7 @@ export const useAuth = create<Auth>((set) => ({
   message: null,
 
   clearAuthFeedback: () => {
-    set({ message: null, error: null });
+    set({ isLoading: false, message: null, error: null });
   },
   checkAuth: async () => {
     set({ isLoading: true, error: null });

@@ -1,11 +1,21 @@
 import { useAuth } from "@/store/auth.store";
 import { LinearGradient } from "expo-linear-gradient";
 import { Grid, Heart, Settings } from "lucide-react-native";
-import { Image, Text, TouchableOpacity, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  Dimensions,
+  Image,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 export default function Profile() {
   const { user, logout } = useAuth();
+  const screenWidth = Dimensions.get("window").width;
+  const GAP = 3;
+  const ITEM_WIDTH = (screenWidth - GAP * 4) / 3;
+  const ITEM_HEIGHT = 180;
 
   async function handleLogout() {
     try {
@@ -16,24 +26,25 @@ export default function Profile() {
   }
 
   return (
-    <SafeAreaView className="bg-dark-primary h-full">
+    <ScrollView style={{ backgroundColor: "#0F0F11", flex: 1 }}>
       <View
         style={{
           paddingVertical: 18,
           paddingHorizontal: 12,
+          marginTop: 20,
           flexDirection: "row",
           justifyContent: "space-between",
           borderBottomColor: "#27272A",
           borderBottomWidth: 1,
         }}
       >
-        <Text style={{ color: "#eee", fontSize: 18 }}>Profile</Text>
-        <Settings width={24} height={24} color="#eee" />
+        <Text style={{ color: "#fff", fontSize: 18 }}>Profile</Text>
+        <Settings width={24} height={24} color="#fff" />
       </View>
       <View>
         <View style={{ alignItems: "center", padding: 24 }}>
           <Image
-            source={{ uri: user?.picture }}
+            source={user?.picture ? { uri: user.picture } : undefined}
             style={{
               width: 112,
               height: 112,
@@ -41,19 +52,19 @@ export default function Profile() {
               marginBottom: 16,
             }}
           />
-          <Text style={{ color: "#eee", marginBottom: 4, fontSize: 24 }}>
+          <Text style={{ color: "#fff", marginBottom: 4, fontSize: 24 }}>
             {user?.name}
           </Text>
           <Text
             style={{
-              color: "#71717A",
+              color: "#A1A1AA",
               marginBottom: 16,
               textTransform: "lowercase",
             }}
           >
-            @{user?.name.split(" ")?.join("")}
+            @{user?.name?.split(" ")?.join("")}
           </Text>
-          <Text style={{ fontSize: 14, color: "#ccc", marginBottom: 24 }}>
+          <Text style={{ fontSize: 14, color: "#fff", marginBottom: 24 }}>
             {user?.bio}
           </Text>
           <View
@@ -61,26 +72,26 @@ export default function Profile() {
             style={{ flexDirection: "row", gap: 32, marginBottom: 24 }}
           >
             <View>
-              <Text style={{ fontSize: 24, lineHeight: 32, color: "#ccc" }}>
+              <Text style={{ fontSize: 24, lineHeight: 32, color: "#fff" }}>
                 42
               </Text>
-              <Text style={{ fontSize: 14, lineHeight: 20, color: "#71717A" }}>
+              <Text style={{ fontSize: 14, lineHeight: 20, color: "#A1A1AA" }}>
                 Posts
               </Text>
             </View>
             <View>
-              <Text style={{ fontSize: 24, lineHeight: 32, color: "#ccc" }}>
+              <Text style={{ fontSize: 24, lineHeight: 32, color: "#fff" }}>
                 1.2M
               </Text>
-              <Text style={{ fontSize: 14, lineHeight: 20, color: "#71717A" }}>
+              <Text style={{ fontSize: 14, lineHeight: 20, color: "#A1A1AA" }}>
                 Followers
               </Text>
             </View>
             <View>
-              <Text style={{ fontSize: 24, lineHeight: 32, color: "#ccc" }}>
+              <Text style={{ fontSize: 24, lineHeight: 32, color: "#fff" }}>
                 385
               </Text>
-              <Text style={{ fontSize: 14, lineHeight: 20, color: "#71717A" }}>
+              <Text style={{ fontSize: 14, lineHeight: 20, color: "#A1A1AA" }}>
                 Following
               </Text>
             </View>
@@ -97,7 +108,7 @@ export default function Profile() {
                 alignItems: "center",
               }}
             >
-              <Text style={{ color: "white", fontSize: 16, fontWeight: "600" }}>
+              <Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>
                 Edit Profile
               </Text>
             </LinearGradient>
@@ -129,7 +140,7 @@ export default function Profile() {
             <Grid size={20} color="#7C3AED" />
             <Text
               style={{
-                color: "#ccc",
+                color: "#fff",
               }}
             >
               Posts
@@ -141,22 +152,44 @@ export default function Profile() {
               gap: 8,
             }}
           >
-            <Heart size={20} color="#71717A" />
+            <Heart size={20} color="#A1A1AA" />
             <Text
               style={{
-                color: "#71717A",
+                color: "#A1A1AA",
               }}
             >
               Likes
             </Text>
           </TouchableOpacity>
         </View>
-        {/* Video Grid */}
-        <View></View>
+        {/* Video Images Grid */}
+        <View
+          style={{
+            flexDirection: "row",
+            flexWrap: "wrap",
+            gap: GAP,
+            padding: GAP,
+          }}
+        >
+          {[...Array(9)].map((_, index) => (
+            <View
+              key={index}
+              style={{
+                width: ITEM_WIDTH,
+                height: ITEM_HEIGHT,
+                backgroundColor: "#ccc",
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <Text>{index + 1}</Text>
+            </View>
+          ))}
+        </View>
         <TouchableOpacity onPress={handleLogout}>
-          <Text style={{ color: "#ccc" }}>Logout</Text>
+          <Text style={{ color: "#fff" }}>Logout</Text>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </ScrollView>
   );
 }
