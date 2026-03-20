@@ -3,6 +3,8 @@ import { useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 import { VideoCard } from "@/components/video-card";
+import MaskedView from "@react-native-masked-view/masked-view";
+import { LinearGradient } from "expo-linear-gradient";
 
 const mockVideos = [
   {
@@ -66,16 +68,33 @@ export default function Home() {
           height: 60,
         }}
       >
-        {/* Dynamic Title */}
-        <Text
-          style={{
-            color: "#FFFFFF",
-            fontSize: 18,
-            fontFamily: "Sora-Bold",
-          }}
+        <MaskedView
+          maskElement={
+            <Text
+              style={{
+                fontFamily: "Sora-Bold",
+                marginTop: 2,
+                alignSelf: "center",
+                fontSize: 24,
+                fontWeight: "bold",
+                color: "white",
+              }}
+            >
+              Pixove
+            </Text>
+          }
         >
-          {activeTab}
-        </Text>
+          <LinearGradient
+            colors={["#F97316", "#7C3AED"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{
+              width: 90,
+              height: 38,
+              alignSelf: "center",
+            }}
+          />
+        </MaskedView>
 
         {/* Right Actions */}
         <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
