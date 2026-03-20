@@ -1,5 +1,6 @@
 import { useAuth } from "@/store/auth.store";
 import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 import { Grid, Heart, Settings } from "lucide-react-native";
 import {
   Dimensions,
@@ -11,19 +12,12 @@ import {
 } from "react-native";
 
 export default function Profile() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
+  const router = useRouter();
   const screenWidth = Dimensions.get("window").width;
   const GAP = 3;
   const ITEM_WIDTH = (screenWidth - GAP * 4) / 3;
   const ITEM_HEIGHT = 180;
-
-  async function handleLogout() {
-    try {
-      await logout();
-    } catch (error) {
-      console.log(error);
-    }
-  }
 
   return (
     <View style={{ backgroundColor: "#0F0F11", flex: 1 }}>
@@ -44,7 +38,9 @@ export default function Profile() {
         >
           Profile
         </Text>
-        <Settings width={24} height={24} color="#fff" />
+        <TouchableOpacity onPress={() => router.push("/settings")}>
+          <Settings width={24} height={24} color="#fff" />
+        </TouchableOpacity>
       </View>
       <ScrollView
         contentContainerStyle={{ gap: 20, paddingBottom: 20 }}
@@ -194,9 +190,6 @@ export default function Profile() {
             </View>
           ))}
         </View>
-        <TouchableOpacity onPress={handleLogout}>
-          <Text style={{ color: "#fff" }}>Logout</Text>
-        </TouchableOpacity>
       </ScrollView>
     </View>
   );

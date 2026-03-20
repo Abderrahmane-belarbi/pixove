@@ -1,4 +1,5 @@
-import { Bell } from "lucide-react-native";
+import { Bell, Search } from "lucide-react-native";
+import { useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 import { VideoCard } from "@/components/video-card";
@@ -45,9 +46,14 @@ const mockVideos = [
   },
 ];
 
+const tabs = ["For You", "Following", "Trending"];
+
 export default function Home() {
+  const [activeTab, setActiveTab] = useState("For You");
+
   return (
     <View style={{ flex: 1, backgroundColor: "#0F0F11" }}>
+      {/* Header */}
       <View
         style={{
           borderBottomColor: "#27272A",
@@ -60,38 +66,116 @@ export default function Home() {
           height: 60,
         }}
       >
+        {/* Dynamic Title */}
         <Text
           style={{
             color: "#FFFFFF",
-            fontSize: 16,
+            fontSize: 18,
             fontFamily: "Sora-Bold",
           }}
         >
-          Pixove
+          {activeTab}
         </Text>
 
-        <TouchableOpacity style={{ padding: 8, position: "relative" }}>
-          <Bell size={24} color="#FFFFFF" />
-          <View
-            style={{
-              position: "absolute",
-              top: 7,
-              right: 9,
-              width: 8,
-              height: 8,
-              borderRadius: 4,
-              backgroundColor: "#F97316",
-            }}
-          />
+        {/* Right Actions */}
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
+          {/* Notifications */}
+          <TouchableOpacity style={{ position: "relative" }}>
+            <Bell size={22} color="#FFFFFF" />
+            <View
+              style={{
+                position: "absolute",
+                top: 4,
+                right: 2,
+                width: 8,
+                height: 8,
+                borderRadius: 4,
+                backgroundColor: "#F97316",
+              }}
+            />
+          </TouchableOpacity>
+
+          {/* Avatar */}
+          <TouchableOpacity>
+            <View
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 16,
+                backgroundColor: "#27272A",
+              }}
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Search */}
+      <View style={{ paddingHorizontal: 16, marginTop: 12 }}>
+        <TouchableOpacity
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 10,
+            backgroundColor: "#18181B",
+            borderRadius: 14,
+            paddingHorizontal: 14,
+            paddingVertical: 12,
+            borderWidth: 1,
+            borderColor: "#27272A",
+          }}
+        >
+          <Search size={18} color="#A1A1AA" />
+          <Text style={{ color: "#A1A1AA" }}>Search videos, creators...</Text>
         </TouchableOpacity>
       </View>
 
+      {/* Tabs */}
+      <View
+        style={{
+          flexDirection: "row",
+          gap: 18,
+          paddingHorizontal: 16,
+          marginTop: 14,
+        }}
+      >
+        {tabs.map((tab) => {
+          const active = tab === activeTab;
+
+          return (
+            <TouchableOpacity key={tab} onPress={() => setActiveTab(tab)}>
+              <Text
+                style={{
+                  color: active ? "#fff" : "#A1A1AA",
+                  fontSize: 14,
+                  fontFamily: active ? "Inter-Medium" : "Inter-Regular",
+                }}
+              >
+                {tab}
+              </Text>
+
+              {active && (
+                <View
+                  style={{
+                    marginTop: 6,
+                    height: 2,
+                    borderRadius: 2,
+                    backgroundColor: "#7C3AED",
+                  }}
+                />
+              )}
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      {/* Feed */}
       <ScrollView
         contentContainerStyle={{
           paddingHorizontal: 16,
           paddingTop: 16,
           paddingBottom: 20,
         }}
+        showsVerticalScrollIndicator={false}
       >
         <View style={{ gap: 18 }}>
           {mockVideos.map((video) => (
