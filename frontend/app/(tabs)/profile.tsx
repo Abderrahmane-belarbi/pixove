@@ -26,7 +26,7 @@ export default function Profile() {
   }
 
   return (
-    <ScrollView style={{ backgroundColor: "#0F0F11", flex: 1 }}>
+    <View style={{ backgroundColor: "#0F0F11", flex: 1 }}>
       <View
         style={{
           borderBottomColor: "#27272A",
@@ -46,7 +46,10 @@ export default function Profile() {
         </Text>
         <Settings width={24} height={24} color="#fff" />
       </View>
-      <View>
+      <ScrollView
+        contentContainerStyle={{ gap: 20, paddingBottom: 20 }}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={{ alignItems: "center", padding: 24 }}>
           <Image
             source={user?.picture ? { uri: user.picture } : undefined}
@@ -194,7 +197,7 @@ export default function Profile() {
         <TouchableOpacity onPress={handleLogout}>
           <Text style={{ color: "#fff" }}>Logout</Text>
         </TouchableOpacity>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }

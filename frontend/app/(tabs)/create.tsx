@@ -37,7 +37,7 @@ export default function Create() {
       </View>
 
       <ScrollView
-        contentContainerStyle={{ padding: 16, gap: 20, paddingBottom: 40 }}
+        contentContainerStyle={{ padding: 16, gap: 20, paddingBottom: 20 }}
         showsVerticalScrollIndicator={false}
       >
         <Pressable

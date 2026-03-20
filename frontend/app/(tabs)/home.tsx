@@ -90,7 +90,7 @@ export default function Home() {
         contentContainerStyle={{
           paddingHorizontal: 16,
           paddingTop: 16,
-          paddingBottom: 120,
+          paddingBottom: 20,
         }}
       >
         <View style={{ gap: 18 }}>
