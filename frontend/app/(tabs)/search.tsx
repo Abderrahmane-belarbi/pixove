@@ -146,8 +146,9 @@ export default function SearchScreen() {
       >
         <Text
           style={{
-            color: "#fff",
-            fontSize: 18,
+            color: "#FFFFFF",
+            fontSize: 16,
+            fontFamily: "Sora-Bold",
             marginBottom: 14,
           }}
         >
@@ -159,7 +160,7 @@ export default function SearchScreen() {
       <ScrollView
         contentContainerStyle={{
           padding: 16,
-          paddingBottom: 100,
+          paddingBottom: 20,
         }}
       >
         <View style={{ marginBottom: 30 }}>
@@ -186,9 +187,7 @@ export default function SearchScreen() {
             style={{
               flexDirection: "row",
               flexWrap: "wrap",
-              justifyContent: "space-between",
-              rowGap: 10,
-              columnGap: 2,
+              gap: 10,
             }}
           >
             {trendingVideos.map((video) => (

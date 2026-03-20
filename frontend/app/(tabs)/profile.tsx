@@ -29,16 +29,21 @@ export default function Profile() {
     <ScrollView style={{ backgroundColor: "#0F0F11", flex: 1 }}>
       <View
         style={{
-          paddingVertical: 18,
-          paddingHorizontal: 12,
-          marginTop: 20,
-          flexDirection: "row",
-          justifyContent: "space-between",
           borderBottomColor: "#27272A",
           borderBottomWidth: 1,
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginTop: 24,
+          paddingHorizontal: 16,
+          height: 60,
         }}
       >
-        <Text style={{ color: "#fff", fontSize: 18 }}>Profile</Text>
+        <Text
+          style={{ color: "#FFFFFF", fontSize: 16, fontFamily: "Sora-Bold" }}
+        >
+          Profile
+        </Text>
         <Settings width={24} height={24} color="#fff" />
       </View>
       <View>
