@@ -1,4 +1,3 @@
-import { SERVER_LOCAL_API_URL } from "@/lib/utils/env";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
@@ -13,7 +12,8 @@ import {
   View,
 } from "react-native";
 
-const baseUrl = `${SERVER_LOCAL_API_URL}/api`;
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
+const baseUrl = `${API_BASE_URL}/api`;
 
 export default function Create() {
   const [title, setTitle] = useState("");
@@ -22,7 +22,7 @@ export default function Create() {
 
   async function handlePublish() {
     setIsLoading(true);
-    const token = await SecureStore.getItem("accessToken");
+    const token = await SecureStore.getItemAsync("accessToken");
     if (!token)
       return Alert.alert(
         "Not logged in",
