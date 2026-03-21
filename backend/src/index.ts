@@ -3,6 +3,7 @@ import "dotenv/config";
 import express from "express";
 import { connectToDatabase } from "./database/connect-to-database";
 import authRoutes from "./routes/auth-routes";
+import postRoutes from "./routes/post.routes";
 
 const app = express();
 
@@ -14,7 +15,7 @@ app.use(express.json()); // to parse incoming requests with JSON payloads (req.b
 app.use(cookieParser()); // to parse cookies from incoming requests (req.cookies)
 
 app.use("/api/auth", authRoutes);
-app.use("/api", authRoutes);
+app.use("/api", postRoutes);
 
 async function start() {
   await connectToDatabase();

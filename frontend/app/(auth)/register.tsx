@@ -63,7 +63,7 @@ export default function Register() {
         registerInput.name,
       );
       setTimeout(() => {
-        router.replace("/(auth)/login");
+        //router.replace("/(auth)/login");
       }, 1000);
     } catch (error) {
       console.log(error);

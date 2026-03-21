@@ -13,7 +13,7 @@ import {
   View,
 } from "react-native";
 
-const baseUrl = `api/${SERVER_LOCAL_API_URL}`;
+const baseUrl = `${SERVER_LOCAL_API_URL}/api`;
 
 export default function Create() {
   const [title, setTitle] = useState("");

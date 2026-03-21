@@ -103,6 +103,7 @@ export const useAuth = create<Auth>((set) => ({
         body: JSON.stringify({ email, password, name }),
       });
       const data = await res.json();
+      console.log(data);
       if (res.ok) {
         set({ message: data.message });
       } else {
