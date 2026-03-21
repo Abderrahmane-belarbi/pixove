@@ -3,7 +3,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { useAuth } from "@/store/auth.store";
 import MaskedView from "@react-native-masked-view/masked-view";
 import { LinearGradient } from "expo-linear-gradient";
-import { Tabs } from "expo-router";
+import { router, Tabs } from "expo-router";
 import { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
 import "react-native-reanimated";
@@ -40,8 +40,8 @@ export default function TabsLayout() {
 
   useEffect(() => {
     if (isLoading) return;
-    //if (status === "unauthenticated") router.replace("/(auth)/login");
-  }, [status]);
+    if (status === "unauthenticated") router.replace("/(auth)/login");
+  }, [isLoading]);
 
   if (isLoading) {
     return (

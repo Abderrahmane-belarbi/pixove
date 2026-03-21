@@ -11,7 +11,7 @@ export default function AuthLayout() {
   useEffect(() => {
     if (isLoading) return;
     if (status === "authenticated") router.replace("/(tabs)/home");
-  }, [status]);
+  }, [isLoading]);
 
   if (isLoading) {
     return (

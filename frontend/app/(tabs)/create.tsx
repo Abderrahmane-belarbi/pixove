@@ -1,9 +1,17 @@
 import { SERVER_LOCAL_API_URL } from "@/lib/utils/env";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 import { Sparkles, Upload } from "lucide-react-native";
 import { useState } from "react";
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import {
+  Alert,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 
 const baseUrl = `api/${SERVER_LOCAL_API_URL}`;
 
@@ -14,11 +22,18 @@ export default function Create() {
 
   async function handlePublish() {
     setIsLoading(true);
+    const token = await SecureStore.getItem("accessToken");
+    if (!token)
+      return Alert.alert(
+        "Not logged in",
+        "Please login before creating a post.",
+      );
     try {
       const res = await fetch(`${baseUrl}/create-post`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           title,
@@ -28,10 +43,15 @@ export default function Create() {
       const data = await res.json();
       console.log(data);
       if (res.ok) {
+        setTitle("");
+        setDescription("");
         //router.replace("/(tabs)/home");
+      } else {
+        Alert.alert("Could not publish", data?.error || "Try again.");
       }
     } catch (error) {
       console.log(error);
+      Alert.alert("Network error", "Failed to create post. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -182,7 +202,7 @@ export default function Create() {
         </View>
 
         {/* Publish button */}
-        <Pressable onPress={handlePublish}>
+        <Pressable onPress={handlePublish} disabled={isLoading}>
           <LinearGradient
             colors={["#7C3AED", "#F97316"]}
             start={{ x: 0, y: 0 }}
@@ -204,7 +224,7 @@ export default function Create() {
                 fontFamily: "Sora-SemiBold",
               }}
             >
-              Publish
+              {isLoading ? "Publishing..." : "Publish"}
             </Text>
           </LinearGradient>
         </Pressable>

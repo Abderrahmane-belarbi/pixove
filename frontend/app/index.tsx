@@ -73,7 +73,6 @@ export default function Onboarding() {
       scrollToSlide(currentIndex + 1);
       return;
     }
-
     router.replace("/(auth)/register");
   }, [currentIndex, scrollToSlide]);
 
@@ -87,14 +86,13 @@ export default function Onboarding() {
   );
 
   useEffect(() => {
-    router.replace("/(tabs)/home");
-    //checkAuth();
+    checkAuth();
   }, [checkAuth]);
 
   useEffect(() => {
-    //if (isLoading) return;
-    //if (status === "authenticated") router.replace("/(tabs)/home");
-  }, [status]);
+    if (isLoading) return;
+    if (status === "authenticated") router.replace("/(tabs)/home");
+  }, [isLoading]);
 
   if (isLoading) {
     return (
