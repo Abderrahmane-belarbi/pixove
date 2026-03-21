@@ -1,4 +1,5 @@
 export type UserLocal = {
+  _id?: string;
   name: string;
   email: string;
   bio?: string;

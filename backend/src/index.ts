@@ -14,6 +14,7 @@ app.use(express.json()); // to parse incoming requests with JSON payloads (req.b
 app.use(cookieParser()); // to parse cookies from incoming requests (req.cookies)
 
 app.use("/api/auth", authRoutes);
+app.use("/api", authRoutes);
 
 async function start() {
   await connectToDatabase();

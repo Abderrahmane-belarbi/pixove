@@ -1,16 +1,41 @@
+import { SERVER_LOCAL_API_URL } from "@/lib/utils/env";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { Sparkles, Upload } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 
+const baseUrl = `api/${SERVER_LOCAL_API_URL}`;
+
 export default function Create() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handlePublish = () => {
-    router.replace("/(tabs)/home");
-  };
+  async function handlePublish() {
+    setIsLoading(true);
+    try {
+      const res = await fetch(`${baseUrl}/create-post`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title,
+          description,
+        }),
+      });
+      const data = await res.json();
+      console.log(data);
+      if (res.ok) {
+        //router.replace("/(tabs)/home");
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: "#0F0F11" }}>
