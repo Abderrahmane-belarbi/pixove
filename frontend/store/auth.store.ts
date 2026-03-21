@@ -50,7 +50,7 @@ export const useAuth = create<Auth>((set) => ({
     set({ isLoading: true, error: null });
     const token = await SecureStore.getItemAsync("accessToken");
     if (!token) {
-      set({ status: "unauthenticated" });
+      set({ status: "unauthenticated", isLoading: false });
       return;
     }
     try {
