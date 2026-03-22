@@ -1,34 +1,167 @@
+import { Image } from "expo-image";
+import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import { Sparkles, Upload } from "lucide-react-native";
-import { useState } from "react";
+import { Sparkles, Upload, X } from "lucide-react-native";
+import { useMemo, useState } from "react";
 import {
   Alert,
   Pressable,
   ScrollView,
   Text,
   TextInput,
-  View,
+  View
 } from "react-native";
 
+type SelectedMedia = {
+  uri: string;
+  type: "image" | "video";
+  mimeType: string;
+  fileName: string;
+  fileSize: number;
+};
+
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
+const CLOUDINARY_CLOUD_NAME = process.env.EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME;
+const CLOUDINARY_UPLOAD_PRESET =
+  process.env.EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+
 const baseUrl = `${API_BASE_URL}/api`;
+const MAX_SINGLE_FILE_BYTES = 100 * 1024 * 1024;
+
+async function uploadToCloudinary(
+  media: SelectedMedia,
+  onProgress: (percent: number) => void,
+) {
+  // 1️⃣ Get signature from backend
+  const sigRes = await fetch(`${API_BASE_URL}/signature`);
+  const sigData = await sigRes.json();
+
+  const resourceType = media.type === "video" ? "video" : "image";
+  const formData = new FormData();
+
+  formData.append("file", {
+    uri: media.uri,
+    type: media.mimeType,
+    name: media.fileName,
+  } as unknown as Blob);
+
+  formData.append("api_key", sigData.apiKey);
+  formData.append("timestamp", sigData.timestamp.toString());
+  formData.append("signature", sigData.signature);
+  formData.append("folder", "pixove/posts");
+
+  // 2️⃣ Use XMLHttpRequest for progress
+  return new Promise<{ url: string }>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percent = Math.round((event.loaded / event.total) * 100);
+        onProgress(percent);
+      }
+    };
+
+    xhr.onreadystatechange = () => {
+      if (xhr.readyState === 4) {
+        if (xhr.status === 200) {
+          const data = JSON.parse(xhr.response);
+          resolve({ url: data.secure_url });
+        } else {
+          const err = JSON.parse(xhr.response);
+          reject(err);
+        }
+      }
+    };
+
+    xhr.open(
+      "POST",
+      `https://api.cloudinary.com/v1_1/${sigData.cloudName}/${resourceType}/upload`,
+    );
+    xhr.send(formData);
+  });
+}
 
 export default function Create() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [selectedMedia, setSelectedMedia] = useState<SelectedMedia | null>(
+    null,
+  );
   const [isLoading, setIsLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
+  const mediaLabel = useMemo(() => {
+    if (!selectedMedia) return "Tap to select video or image";
+    return `${selectedMedia.fileName} • ${(selectedMedia.fileSize / 1024 / 1024).toFixed(1)} MB`;
+  }, [selectedMedia]);
+
+  async function handlePickMedia() {
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (!permissionResult.granted) {
+      Alert.alert(
+        "Permission required",
+        "Please allow media library access to choose a video or image.",
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images", "videos"],
+      allowsEditing: false,
+      quality: 1,
+      videoMaxDuration: 180,
+    });
+
+    if (result.canceled) return;
+
+    const asset = result.assets[0];
+    const type = asset.type === "video" ? "video" : "image";
+    const fileSize = asset.fileSize ?? 0;
+
+    if (fileSize > MAX_SINGLE_FILE_BYTES) {
+      Alert.alert(
+        `File too large", "Please select a file smaller than ${MAX_SINGLE_FILE_BYTES / 1024 / 1024}MB.`,
+      );
+      return;
+    }
+
+    setSelectedMedia({
+      uri: asset.uri,
+      type,
+      fileName:
+        asset.fileName ??
+        `upload-${Date.now()}.${type === "video" ? "mp4" : "jpg"}`,
+      mimeType:
+        asset.mimeType ?? (type === "video" ? "video/mp4" : "image/jpeg"),
+      fileSize,
+    });
+  }
 
   async function handlePublish() {
+    if (!title.trim()) {
+      Alert.alert("Missing title", "Please add a title before publishing.");
+      return;
+    }
+
     setIsLoading(true);
-    const token = await SecureStore.getItemAsync("accessToken");
-    if (!token)
-      return Alert.alert(
-        "Not logged in",
-        "Please login before creating a post.",
-      );
+    setUploadProgress(0);
+
     try {
+      const token = await SecureStore.getItemAsync("accessToken");
+      if (!token) throw new Error("Not logged in");
+
+      const uploadedMedia = selectedMedia
+        ? [
+            await uploadToCloudinary(selectedMedia, (percent) => {
+              setUploadProgress(percent);
+            }),
+          ]
+        : [];
+
       const res = await fetch(`${baseUrl}/create-post`, {
         method: "POST",
         headers: {
@@ -38,20 +171,30 @@ export default function Create() {
         body: JSON.stringify({
           title,
           description,
+          media: uploadedMedia.map((m, i) => ({
+            url: m.url,
+            type: selectedMedia?.type,
+            name: selectedMedia?.fileName,
+            size: selectedMedia?.fileSize,
+          })),
         }),
       });
+
       const data = await res.json();
-      console.log(data);
+
       if (res.ok) {
         setTitle("");
         setDescription("");
-        //router.replace("/(tabs)/home");
+        setSelectedMedia(null);
+        setUploadProgress(0);
+        Alert.alert("Published", "Your post was published successfully.");
       } else {
-        Alert.alert("Could not publish", data?.error || "Try again.");
+        throw new Error(data?.error || "Failed to publish");
       }
-    } catch (error) {
-      console.log(error);
-      Alert.alert("Network error", "Failed to create post. Please try again.");
+    } catch (err) {
+      console.error(err);
+      const message = err instanceof Error ? err.message : "Upload failed";
+      Alert.alert("Error", message);
     } finally {
       setIsLoading(false);
     }
@@ -86,6 +229,7 @@ export default function Create() {
         showsVerticalScrollIndicator={false}
       >
         <Pressable
+          onPress={handlePickMedia}
           style={{
             borderWidth: 2,
             borderStyle: "dashed",
@@ -96,8 +240,24 @@ export default function Create() {
             alignItems: "center",
             justifyContent: "center",
             padding: 20,
+            position: "relative",
+            overflow: "hidden",
           }}
         >
+          {!!selectedMedia && selectedMedia.type === "image" ? (
+            <Image
+              source={{ uri: selectedMedia.uri }}
+              style={{
+                position: "absolute",
+                top: 0,
+                right: 0,
+                bottom: 0,
+                left: 0,
+              }}
+              contentFit="cover"
+            />
+          ) : null}
+
           <View
             style={{
               width: 70,
@@ -111,6 +271,7 @@ export default function Create() {
           >
             <Upload size={34} color="#7C3AED" />
           </View>
+
           <Text
             style={{
               color: "#FFFFFF",
@@ -118,7 +279,7 @@ export default function Create() {
               fontFamily: "Sora-SemiBold",
             }}
           >
-            Upload Media
+            {selectedMedia ? "Media selected" : "Upload Media"}
           </Text>
           <Text
             style={{
@@ -126,9 +287,10 @@ export default function Create() {
               fontSize: 13,
               fontFamily: "Inter-Regular",
               marginTop: 6,
+              textAlign: "center",
             }}
           >
-            Tap to select video or image
+            {mediaLabel}
           </Text>
           <Text
             style={{
@@ -141,7 +303,26 @@ export default function Create() {
           </Text>
         </Pressable>
 
-        {/* Title */}
+        {selectedMedia ? (
+          <Pressable
+            onPress={() => setSelectedMedia(null)}
+            style={{
+              alignSelf: "flex-start",
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 6,
+              paddingVertical: 6,
+              paddingHorizontal: 10,
+              borderRadius: 999,
+              borderWidth: 1,
+              borderColor: "#3F3F46",
+            }}
+          >
+            <X size={14} color="#A1A1AA" />
+            <Text style={{ color: "#A1A1AA", fontSize: 12 }}>Remove media</Text>
+          </Pressable>
+        ) : null}
+
         <View>
           <Text
             style={{
@@ -169,7 +350,6 @@ export default function Create() {
           />
         </View>
 
-        {/* Description */}
         <View>
           <Text
             style={{
@@ -201,7 +381,6 @@ export default function Create() {
           />
         </View>
 
-        {/* Publish button */}
         <Pressable onPress={handlePublish} disabled={isLoading}>
           <LinearGradient
             colors={["#7C3AED", "#F97316"]}
@@ -214,9 +393,14 @@ export default function Create() {
               justifyContent: "center",
               alignItems: "center",
               gap: 8,
+              opacity: isLoading ? 0.7 : 1,
             }}
           >
-            <Sparkles size={18} color="#FFFFFF" />
+            {isLoading ? (
+              <Text style={{ color: "#FFF" }}>{uploadProgress}%</Text>
+            ) : (
+              <Sparkles size={18} color="#FFFFFF" />
+            )}
             <Text
               style={{
                 color: "#FFFFFF",
@@ -224,7 +408,7 @@ export default function Create() {
                 fontFamily: "Sora-SemiBold",
               }}
             >
-              {isLoading ? "Publishing..." : "Publish"}
+              {isLoading ? "Uploading..." : "Publish"}
             </Text>
           </LinearGradient>
         </Pressable>
