@@ -11,7 +11,7 @@ import {
   ScrollView,
   Text,
   TextInput,
-  View
+  View,
 } from "react-native";
 
 type SelectedMedia = {
@@ -23,10 +23,6 @@ type SelectedMedia = {
 };
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
-const CLOUDINARY_CLOUD_NAME = process.env.EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME;
-const CLOUDINARY_UPLOAD_PRESET =
-  process.env.EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
-
 const baseUrl = `${API_BASE_URL}/api`;
 const MAX_SINGLE_FILE_BYTES = 100 * 1024 * 1024;
 
@@ -35,7 +31,11 @@ async function uploadToCloudinary(
   onProgress: (percent: number) => void,
 ) {
   // 1️⃣ Get signature from backend
-  const sigRes = await fetch(`${API_BASE_URL}/signature`);
+  const sigRes = await fetch(`${baseUrl}/signature`);
+  if (!sigRes.ok) {
+    throw new Error("Failed to generate upload signature");
+  }
+
   const sigData = await sigRes.json();
 
   const resourceType = media.type === "video" ? "video" : "image";
@@ -69,8 +69,14 @@ async function uploadToCloudinary(
           const data = JSON.parse(xhr.response);
           resolve({ url: data.secure_url });
         } else {
-          const err = JSON.parse(xhr.response);
-          reject(err);
+          try {
+            const err = JSON.parse(xhr.response);
+            reject(
+              new Error(err?.error?.message ?? "Cloudinary upload failed"),
+            );
+          } catch {
+            reject(new Error("Cloudinary upload failed"));
+          }
         }
       }
     };
@@ -124,7 +130,8 @@ export default function Create() {
 
     if (fileSize > MAX_SINGLE_FILE_BYTES) {
       Alert.alert(
-        `File too large", "Please select a file smaller than ${MAX_SINGLE_FILE_BYTES / 1024 / 1024}MB.`,
+        "File too large",
+        `Please select a file smaller than ${MAX_SINGLE_FILE_BYTES / 1024 / 1024}MB.`,
       );
       return;
     }
