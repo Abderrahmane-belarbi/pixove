@@ -1,4 +1,5 @@
 import { Image } from "expo-image";
+import { File } from "expo-file-system";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
@@ -28,10 +29,15 @@ const MAX_SINGLE_FILE_BYTES = 100 * 1024 * 1024;
 
 async function uploadToCloudinary(
   media: SelectedMedia,
+  token: string,
   onProgress: (percent: number) => void,
 ) {
   // 1️⃣ Get signature from backend
-  const sigRes = await fetch(`${baseUrl}/signature`);
+  const sigRes = await fetch(`${baseUrl}/signature`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
   if (!sigRes.ok) {
     throw new Error("Failed to generate upload signature");
   }
@@ -50,7 +56,7 @@ async function uploadToCloudinary(
   formData.append("api_key", sigData.apiKey);
   formData.append("timestamp", sigData.timestamp.toString());
   formData.append("signature", sigData.signature);
-  formData.append("folder", "pixove/posts");
+  formData.append("folder", sigData.folder);
 
   // 2️⃣ Use XMLHttpRequest for progress
   return new Promise<{ url: string }>((resolve, reject) => {
@@ -80,6 +86,7 @@ async function uploadToCloudinary(
         }
       }
     };
+    xhr.onerror = () => reject(new Error("Network error during upload"));
 
     xhr.open(
       "POST",
@@ -126,7 +133,21 @@ export default function Create() {
 
     const asset = result.assets[0];
     const type = asset.type === "video" ? "video" : "image";
-    const fileSize = asset.fileSize ?? 0;
+    const fileInfo = new File(asset.uri);
+    const fileSize =
+      typeof asset.fileSize === "number"
+        ? asset.fileSize
+        : fileInfo.exists && typeof fileInfo.size === "number"
+          ? fileInfo.size
+          : null;
+
+    if (fileSize === null) {
+      Alert.alert(
+        "Upload error",
+        "Could not determine file size. Please choose a different file.",
+      );
+      return;
+    }
 
     if (fileSize > MAX_SINGLE_FILE_BYTES) {
       Alert.alert(
@@ -163,7 +184,7 @@ export default function Create() {
 
       const uploadedMedia = selectedMedia
         ? [
-            await uploadToCloudinary(selectedMedia, (percent) => {
+            await uploadToCloudinary(selectedMedia, token, (percent) => {
               setUploadProgress(percent);
             }),
           ]
@@ -178,7 +199,7 @@ export default function Create() {
         body: JSON.stringify({
           title,
           description,
-          media: uploadedMedia.map((m, i) => ({
+          media: uploadedMedia.map((m) => ({
             url: m.url,
             type: selectedMedia?.type,
             name: selectedMedia?.fileName,

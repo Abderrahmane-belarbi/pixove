@@ -19,14 +19,34 @@ function estimateBase64Bytes(dataUri: string) {
   return Math.ceil((payload.length * 3) / 4);
 }
 
+function isTrustedCloudinaryUrl(url: string) {
+  try {
+    const parsed = new URL(url);
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+    const isCloudinaryHost = parsed.hostname === "res.cloudinary.com";
+    if (!isCloudinaryHost || parsed.protocol !== "https:") return false;
+    if (!cloudName) return true;
+    return parsed.pathname.startsWith(`/${cloudName}/`);
+  } catch {
+    return false;
+  }
+}
+
 async function uploadMediaToCloudinary(mediaItems: MediaInput[]) {
   if (!mediaItems.length) return [];
 
   const uploads = mediaItems.map(async (item) => {
-    const source = item.dataUri ?? item.url;
-    if (!source) throw new Error("Missing media source.");
+    if (item.url) {
+      return {
+        name: item.name,
+        url: item.url,
+        size: item.size,
+        type: item.type,
+      };
+    }
+    if (!item.dataUri) throw new Error("Missing media source.");
 
-    const uploadResult = await cloudinary.uploader.upload(source, {
+    const uploadResult = await cloudinary.uploader.upload(item.dataUri, {
       folder: "pixove/posts",
       resource_type: item.type === "video" ? "video" : "image",
     });
@@ -81,6 +101,14 @@ export async function createPost(req: Request, res: Response) {
   if (hasOversizedBase64) {
     return res.status(400).json({
       error: "One or more media files exceeds the 100MB size limit.",
+    });
+  }
+  const hasUntrustedUrl = mediaInput.some(
+    (item) => !!item.url && !isTrustedCloudinaryUrl(item.url),
+  );
+  if (hasUntrustedUrl) {
+    return res.status(400).json({
+      error: "Invalid media url. Please upload media to Cloudinary first.",
     });
   }
 
