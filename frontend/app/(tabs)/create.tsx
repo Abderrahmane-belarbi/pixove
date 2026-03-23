@@ -25,7 +25,8 @@ type SelectedMedia = {
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
 const baseUrl = `${API_BASE_URL}/api`;
-const MAX_SINGLE_FILE_BYTES = 100 * 1024 * 1024;
+const MAX_IMAGE_BYTES = 7 * 1024 * 1024; // 7MB
+const MAX_VIDEO_BYTES = 100 * 1024 * 1024; // 100MB
 
 async function uploadToCloudinary(
   media: SelectedMedia,
@@ -149,10 +150,13 @@ export default function Create() {
       return;
     }
 
-    if (fileSize > MAX_SINGLE_FILE_BYTES) {
+    if (
+      (type === "image" && fileSize > MAX_IMAGE_BYTES) ||
+      (type === "video" && fileSize > MAX_VIDEO_BYTES)
+    ) {
       Alert.alert(
         "File too large",
-        `Please select a file smaller than ${MAX_SINGLE_FILE_BYTES / 1024 / 1024}MB.`,
+        `Please select ${type} smaller than ${(type === "image" ? MAX_IMAGE_BYTES : MAX_VIDEO_BYTES) / 1024 / 1024}MB.`,
       );
       return;
     }
