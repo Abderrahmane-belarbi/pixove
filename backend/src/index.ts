@@ -2,7 +2,7 @@ import cookieParser from "cookie-parser";
 import "dotenv/config";
 import express from "express";
 import { connectToDatabase } from "./database/connect-to-database";
-import authRoutes from "./routes/auth-routes";
+import authRoutes from "./routes/auth.routes";
 import cloudinaryRoutes from "./routes/cloudinary.routes";
 import postRoutes from "./routes/post.routes";
 
