@@ -10,10 +10,8 @@ export type MediaInput = {
 };
 
 export const MAX_MEDIA_ITEMS = 5;
-
-// 🔴 Adjust these carefully (your cost control)
 const MAX_IMAGE_BYTES = 7 * 1024 * 1024; // 7MB
-const MAX_VIDEO_BYTES = 100 * 1024 * 1024; // 100MB (consider lowering to 20MB)
+const MAX_VIDEO_BYTES = 20 * 1024 * 1024; // 20MB
 
 //
 // -----------------------------

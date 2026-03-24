@@ -1,3 +1,5 @@
+import { uploadToCloudinary } from "@/lib/utils/upload-cloudinary";
+import { SelectedMedia } from "@/types";
 import { File } from "expo-file-system";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
@@ -5,7 +7,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { Sparkles, Upload, X } from "lucide-react-native";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   Alert,
   Pressable,
@@ -15,87 +17,10 @@ import {
   View,
 } from "react-native";
 
-type SelectedMedia = {
-  uri: string;
-  type: "image" | "video";
-  mimeType: string;
-  fileName: string;
-  fileSize: number;
-};
-
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
 const baseUrl = `${API_BASE_URL}/api`;
 const MAX_IMAGE_BYTES = 7 * 1024 * 1024; // 7MB
 const MAX_VIDEO_BYTES = 100 * 1024 * 1024; // 100MB
-
-async function uploadToCloudinary(
-  media: SelectedMedia,
-  token: string,
-  onProgress: (percent: number) => void,
-) {
-  // 1️⃣ Get signature from backend
-  const sigRes = await fetch(`${baseUrl}/signature`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  if (!sigRes.ok) {
-    throw new Error("Failed to generate upload signature");
-  }
-
-  const sigData = await sigRes.json();
-
-  const resourceType = media.type === "video" ? "video" : "image";
-  const formData = new FormData();
-
-  formData.append("file", {
-    uri: media.uri,
-    type: media.mimeType,
-    name: media.fileName,
-  } as unknown as Blob);
-
-  formData.append("api_key", sigData.apiKey);
-  formData.append("timestamp", sigData.timestamp.toString());
-  formData.append("signature", sigData.signature);
-  formData.append("folder", sigData.folder);
-
-  // 2️⃣ Use XMLHttpRequest for progress
-  return new Promise<{ url: string }>((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-
-    xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable) {
-        const percent = Math.round((event.loaded / event.total) * 100);
-        onProgress(percent);
-      }
-    };
-
-    xhr.onreadystatechange = () => {
-      if (xhr.readyState === 4) {
-        if (xhr.status === 200) {
-          const data = JSON.parse(xhr.response);
-          resolve({ url: data.secure_url });
-        } else {
-          try {
-            const err = JSON.parse(xhr.response);
-            reject(
-              new Error(err?.error?.message ?? "Cloudinary upload failed"),
-            );
-          } catch {
-            reject(new Error("Cloudinary upload failed"));
-          }
-        }
-      }
-    };
-    xhr.onerror = () => reject(new Error("Network error during upload"));
-
-    xhr.open(
-      "POST",
-      `https://api.cloudinary.com/v1_1/${sigData.cloudName}/${resourceType}/upload`,
-    );
-    xhr.send(formData);
-  });
-}
 
 export default function Create() {
   const [title, setTitle] = useState("");
@@ -106,10 +31,9 @@ export default function Create() {
   const [isLoading, setIsLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  const mediaLabel = useMemo(() => {
-    if (!selectedMedia) return "Tap to select video or image";
-    return `${selectedMedia.fileName} • ${(selectedMedia.fileSize / 1024 / 1024).toFixed(1)} MB`;
-  }, [selectedMedia]);
+  const mediaLabel = !selectedMedia
+    ? "Tap to select video or image"
+    : `${selectedMedia.fileName} • ${(selectedMedia.fileSize / 1024 / 1024).toFixed(1)} MB`;
 
   async function handlePickMedia() {
     const permissionResult =
@@ -125,9 +49,9 @@ export default function Create() {
 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images", "videos"],
-      allowsEditing: false,
+      allowsEditing: true,
       quality: 1,
-      videoMaxDuration: 180,
+      videoMaxDuration: 60,
     });
 
     if (result.canceled) return;
@@ -188,9 +112,14 @@ export default function Create() {
 
       const uploadedMedia = selectedMedia
         ? [
-            await uploadToCloudinary(selectedMedia, token, (percent) => {
-              setUploadProgress(percent);
-            }),
+            await uploadToCloudinary(
+              selectedMedia,
+              token,
+              baseUrl,
+              (percent) => {
+                setUploadProgress(percent);
+              },
+            ),
           ]
         : [];
 

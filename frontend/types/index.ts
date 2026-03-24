@@ -11,3 +11,11 @@ export type UserLocal = {
 };
 
 export type User = Omit<UserLocal, "password">;
+
+export type SelectedMedia = {
+  uri: string;
+  type: "image" | "video";
+  mimeType: string;
+  fileName: string;
+  fileSize: number;
+};
