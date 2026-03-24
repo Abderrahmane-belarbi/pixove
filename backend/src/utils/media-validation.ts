@@ -128,9 +128,9 @@ export async function validateMediaSize(
 
         return {
           name: item.name ?? resource.public_id,
-          url: item.url,
-          size: resource.bytes, // ✅ trusted size
-          type: item.type,
+          url: resource.secure_url,
+          size: resource.bytes,
+          type: resource.resource_type,
         };
       } catch (err) {
         console.error("Cloudinary validation error:", err);

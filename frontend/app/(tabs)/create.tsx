@@ -20,7 +20,7 @@ import {
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
 const baseUrl = `${API_BASE_URL}/api`;
 const MAX_IMAGE_BYTES = 7 * 1024 * 1024; // 7MB
-const MAX_VIDEO_BYTES = 100 * 1024 * 1024; // 100MB
+const MAX_VIDEO_BYTES = 20 * 1024 * 1024; // 20MB
 
 export default function Create() {
   const [title, setTitle] = useState("");

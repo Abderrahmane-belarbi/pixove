@@ -8,7 +8,11 @@ const router = Router();
 router.get("/signature", verifyToken, (_, res) => {
   const timestamp = Math.round(new Date().getTime() / 1000);
   const signature = cloudinary.utils.api_sign_request(
-    { timestamp, folder: process.env.CLOUDINARY_UPLOAD_FOLDER },
+    {
+      folder: process.env.CLOUDINARY_UPLOAD_FOLDER,
+      // public id
+      timestamp,
+    },
     process.env.CLOUDINARY_API_SECRET!,
   );
 
