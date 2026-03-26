@@ -119,7 +119,7 @@ export async function validateMediaSize(
           (item.type === "video" && resource.bytes > MAX_VIDEO_BYTES);
 
         if (isTooLarge) {
-          // 🔥 delete invalid file immediately
+          // delete invalid file immediately
           await cloudinary.uploader.destroy(publicId, {
             resource_type: item.type,
           });
