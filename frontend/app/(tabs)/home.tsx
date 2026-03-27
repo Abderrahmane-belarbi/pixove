@@ -1,3 +1,4 @@
+import { useFocusEffect } from "expo-router";
 import { Bell, Search } from "lucide-react-native";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -12,7 +13,6 @@ import { VideoCard } from "@/components/video-card";
 import { Post } from "@/types";
 import MaskedView from "@react-native-masked-view/masked-view";
 import { LinearGradient } from "expo-linear-gradient";
-import { useFocusEffect } from "expo-router";
 
 const tabs = ["For You", "Following", "Trending"];
 
