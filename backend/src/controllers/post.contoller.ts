@@ -70,9 +70,9 @@ export async function getPosts(req: Request, res: Response) {
       id: post._id,
       title: post.title,
       description: post.description,
-      media: post.media,
-      likes: post.likes.length || [],
-      comments: post.comments.length || [],
+      media: post.media[0],
+      likes: post.likes,
+      comments: post.comments,
       createdAt: post.createdAt,
       updatedAt: post.updatedAt,
       auther: {

@@ -148,7 +148,7 @@ export default function Create() {
         setDescription("");
         setSelectedMedia(null);
         setUploadProgress(0);
-        Alert.alert("Published", "Your post was published successfully.");
+        router.replace("/(tabs)/home");
       } else {
         throw new Error(data?.error || "Failed to publish");
       }
