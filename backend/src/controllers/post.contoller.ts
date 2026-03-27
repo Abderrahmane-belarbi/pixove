@@ -58,12 +58,35 @@ export async function createPost(req: Request, res: Response) {
 
 export async function getPosts(req: Request, res: Response) {
   try {
-    const posts = await Post.find();
+    const posts = await Post.find().populate(
+      "userId",
+      "name email picture bio",
+    );
+    console.log("POST:", posts);
     if (posts.length === 0)
       return res.status(200).json({ message: "No posts", posts: [] });
-    return res.status(200).json({
-      message: "Getting Post seccessfuly",
-      posts,
+
+    const formattedPosts = posts.map((post) => ({
+      id: post._id,
+      title: post.title,
+      description: post.description,
+      media: post.media,
+      likes: post.likes.length || [],
+      comments: post.comments.length || [],
+      createdAt: post.createdAt,
+      updatedAt: post.updatedAt,
+      auther: {
+        id: post.userId._id,
+        name: post.userId.name,
+        email: post.userId.email,
+        picture: post.userId.picture,
+        bio: post.userId.bio,
+      },
+    }));
+
+    return res.json({
+      message: "success",
+      posts: formattedPosts,
     });
   } catch (error) {
     const getPostsError =

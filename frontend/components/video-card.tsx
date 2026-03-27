@@ -1,24 +1,12 @@
+import { Post } from "@/types";
 import { Bookmark, Heart, MessageCircle, Play } from "lucide-react-native";
 import { Image, Text, TouchableOpacity, View } from "react-native";
 
-type VideoCardProps = {
-  thumbnail: string;
-  title: string;
-  creator: {
-    name: string;
-    avatar: string;
-  };
-  likes: number;
-  comments: number;
+type MediaCardProps = {
+  post: Post;
 };
 
-export function VideoCard({
-  thumbnail,
-  title,
-  creator,
-  likes,
-  comments,
-}: VideoCardProps) {
+export function VideoCard({ post }: MediaCardProps) {
   return (
     <View
       style={{
@@ -41,7 +29,7 @@ export function VideoCard({
         }}
       >
         <Image
-          source={{ uri: thumbnail }}
+          source={{ uri: post.media.url }}
           style={{ width: "100%", height: "100%" }}
           resizeMode="cover"
         />
@@ -93,13 +81,13 @@ export function VideoCard({
             }}
           >
             <Image
-              source={{ uri: creator.avatar }}
+              source={{ uri: post.auther.picture }}
               style={{ width: "100%", height: "100%" }}
               resizeMode="cover"
             />
           </View>
           <Text style={{ color: "#FFFFFF", fontSize: 15, fontWeight: "600" }}>
-            {creator.name}
+            {post.auther.name}
           </Text>
         </View>
 
@@ -112,7 +100,7 @@ export function VideoCard({
           }}
           numberOfLines={2}
         >
-          {title}
+          {post.title}
         </Text>
 
         <View
@@ -132,7 +120,7 @@ export function VideoCard({
             >
               <Heart color="#F97316" size={20} />
               <Text style={{ color: "#A1A1AA", fontSize: 13, marginLeft: 6 }}>
-                {likes.toLocaleString()}
+                {post.likes.length}
               </Text>
             </TouchableOpacity>
 
@@ -141,7 +129,7 @@ export function VideoCard({
             >
               <MessageCircle color="#7C3AED" size={20} />
               <Text style={{ color: "#A1A1AA", fontSize: 13, marginLeft: 6 }}>
-                {comments.toLocaleString()}
+                {post.comments.length}
               </Text>
             </TouchableOpacity>
           </View>

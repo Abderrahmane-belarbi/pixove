@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 import { VideoCard } from "@/components/video-card";
+import { Post } from "@/types";
 import MaskedView from "@react-native-masked-view/masked-view";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -51,18 +52,22 @@ const mockVideos = [
 const tabs = ["For You", "Following", "Trending"];
 
 export default function Home() {
+  const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
+  const baseUrl = `${API_BASE_URL}/api`;
+
   const [activeTab, setActiveTab] = useState("For You");
-  const [posts, setPosts] = useState([]);
+  const [posts, setPosts] = useState<Post[]>([]);
+
   useEffect(() => {
     async function gettingPosts() {
       try {
-        const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/posts`);
+        const res = await fetch(`${baseUrl}/posts`);
         if (!res.ok) {
           throw new Error("Failed to fetch posts");
         }
         const data = await res.json();
-        //setPosts(data.posts);
-        console.log("posts:", data.posts);
+        console.log(data.posts);
+        setPosts(data.posts);
       } catch (error) {
         console.log(error);
       }
@@ -212,9 +217,14 @@ export default function Home() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={{ gap: 18 }}>
+        {/*<View style={{ gap: 18 }}>
           {mockVideos.map((video) => (
             <VideoCard key={video.id} {...video} />
+          ))}
+        </View>*/}
+        <View style={{ gap: 18 }}>
+          {posts.map((post) => (
+            <VideoCard key={post.id} post={post} />
           ))}
         </View>
       </ScrollView>
