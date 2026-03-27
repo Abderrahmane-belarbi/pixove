@@ -38,7 +38,10 @@ export async function uploadToCloudinary(
 
     xhr.upload.onprogress = (event) => {
       if (event.lengthComputable) {
-        const percent = Math.round((event.loaded / event.total) * 100);
+        let percent = (event.loaded / event.total) * 100;
+        // clamp to 100
+        if (percent > 100) percent = 100;
+        percent = Math.round(percent);
         onProgress(percent);
       }
     };
