@@ -1,5 +1,5 @@
 import { Bell, Search } from "lucide-react-native";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 import { VideoCard } from "@/components/video-card";
@@ -52,7 +52,23 @@ const tabs = ["For You", "Following", "Trending"];
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("For You");
-
+  const [posts, setPosts] = useState([]);
+  useEffect(() => {
+    async function gettingPosts() {
+      try {
+        const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/posts`);
+        if (!res.ok) {
+          throw new Error("Failed to fetch posts");
+        }
+        const data = await res.json();
+        //setPosts(data.posts);
+        console.log("posts:", data.posts);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    gettingPosts();
+  }, []);
   return (
     <View style={{ flex: 1, backgroundColor: "#0F0F11" }}>
       {/* Header */}

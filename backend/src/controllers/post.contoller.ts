@@ -55,3 +55,20 @@ export async function createPost(req: Request, res: Response) {
     return res.status(500).json({ error: "Failed to create post" });
   }
 }
+
+export async function getPosts(req: Request, res: Response) {
+  try {
+    const posts = await Post.find();
+    if (posts.length === 0)
+      return res.status(200).json({ message: "No posts", posts: [] });
+    return res.status(200).json({
+      message: "Getting Post seccessfuly",
+      posts,
+    });
+  } catch (error) {
+    const getPostsError =
+      error instanceof Error ? error.message : "Getting post operation failed";
+    console.log(error);
+    return res.status(500).json({ error: getPostsError });
+  }
+}
