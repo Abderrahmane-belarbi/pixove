@@ -58,10 +58,9 @@ export async function createPost(req: Request, res: Response) {
 
 export async function getPosts(req: Request, res: Response) {
   try {
-    const posts = await Post.find().populate(
-      "userId",
-      "name email picture bio",
-    );
+    const posts = await Post.find()
+      .populate("userId", "name email picture bio")
+      .sort({ createdAt: -1 });
     console.log("POST:", posts);
     if (posts.length === 0)
       return res.status(200).json({ message: "No posts", posts: [] });
