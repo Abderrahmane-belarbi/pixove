@@ -3,12 +3,11 @@ import { Bell, Search } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   FlatList,
-  ListRenderItem,
   RefreshControl,
   Text,
   TouchableOpacity,
   View,
-  ViewToken,
+  ViewToken
 } from "react-native";
 
 import { MediaCard } from "@/components/media-card";
@@ -208,21 +207,16 @@ export default function Home() {
     [activeTab],
   );
 
-  const renderPost: ListRenderItem<Post> = useCallback(
-    ({ item }) => (
-      <View style={{ marginBottom: 18 }}>
-        <MediaCard post={item} isVisible={visiblePostId === item.id} />
-      </View>
-    ),
-    [visiblePostId],
-  );
-
   return (
     <View style={{ flex: 1, backgroundColor: "#0F0F11" }}>
       <FlatList
         data={posts}
         keyExtractor={(item) => item.id}
-        renderItem={renderPost}
+        renderItem={({ item }) => (
+          <View style={{ marginBottom: 18 }}>
+            <MediaCard post={item} isVisible={visiblePostId === item.id} />
+          </View>
+        )}
         ListHeaderComponent={renderHeader}
         contentContainerStyle={{
           paddingHorizontal: 16,
