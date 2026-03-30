@@ -9,7 +9,7 @@ import {
   View,
 } from "react-native";
 
-import { VideoCard } from "@/components/video-card";
+import { MediaCard } from "@/components/media-card";
 import { Post } from "@/types";
 import MaskedView from "@react-native-masked-view/masked-view";
 import { LinearGradient } from "expo-linear-gradient";
@@ -201,7 +201,7 @@ export default function Home() {
       >
         <View style={{ gap: 18 }}>
           {posts.map((post) => (
-            <VideoCard key={post.id} post={post} />
+            <MediaCard key={post.id} post={post} />
           ))}
         </View>
       </ScrollView>

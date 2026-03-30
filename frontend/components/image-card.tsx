@@ -1,8 +1,7 @@
 import { Image } from "expo-image";
-import { Play } from "lucide-react-native";
 import { View } from "react-native";
 
-export default function VedioCard({ url }: { url: string }) {
+export default function ImageCard({ url }: { url: string }) {
   return (
     <View
       style={{
@@ -29,20 +28,7 @@ export default function VedioCard({ url }: { url: string }) {
           alignItems: "center",
           justifyContent: "center",
         }}
-      >
-        <View
-          style={{
-            width: 64,
-            height: 64,
-            borderRadius: 32,
-            backgroundColor: "rgba(255,255,255,0.24)",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Play color="#FFFFFF" size={24} fill="#FFFFFF" />
-        </View>
-      </View>
+      ></View>
     </View>
   );
 }
