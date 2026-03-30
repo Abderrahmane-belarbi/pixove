@@ -1,14 +1,16 @@
+// frontend/components/media-card.tsx
 import { Post } from "@/types";
 import { Bookmark, Heart, MessageCircle } from "lucide-react-native";
 import { Image, Text, TouchableOpacity, View } from "react-native";
 import ImageCard from "./image-card";
-import VedioCard from "./video-card";
+import VideoCard from "./video-card";
 
 type MediaCardProps = {
   post: Post;
+  isVisible: boolean;
 };
 
-export function MediaCard({ post }: MediaCardProps) {
+export function MediaCard({ post, isVisible }: MediaCardProps) {
   return (
     <View
       style={{
@@ -22,7 +24,13 @@ export function MediaCard({ post }: MediaCardProps) {
         elevation: 6,
       }}
     >
-      {post.media.type === "video" && <VedioCard url={post.media.url} />}
+      {post.media.type === "video" && (
+        <VideoCard
+          url={post.media.url}
+          hlsUrl={post.media.url}
+          shouldAutoPlay={isVisible}
+        />
+      )}
       {post.media.type === "image" && <ImageCard url={post.media.url} />}
       <View style={{ padding: 16 }}>
         <View
