@@ -1,3 +1,4 @@
+import { useVideoPlayer, VideoSource, VideoView } from "expo-video";
 import { Play, Volume2, VolumeX } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -6,8 +7,6 @@ import {
   StyleSheet,
   View,
 } from "react-native";
-// eslint-disable-next-line import/no-unresolved
-import { useVideoPlayer, VideoSource, VideoView } from "expo-video";
 
 type VideoCardProps = {
   url: string;
@@ -49,6 +48,7 @@ export default function VideoCard({
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
+  const [isManuallyPaused, setIsManuallyPaused] = useState(false);
 
   const player = useVideoPlayer(source, (videoPlayer) => {
     videoPlayer.loop = true;
@@ -60,7 +60,7 @@ export default function VideoCard({
   }, [isMuted, player]);
 
   useEffect(() => {
-    if (shouldAutoPlay) {
+    if (shouldAutoPlay && !isManuallyPaused) {
       player.play();
       setIsPlaying(true);
       return;
@@ -68,17 +68,22 @@ export default function VideoCard({
 
     player.pause();
     setIsPlaying(false);
-  }, [player, shouldAutoPlay]);
+    if (!shouldAutoPlay) {
+      setIsManuallyPaused(false);
+    }
+  }, [isManuallyPaused, player, shouldAutoPlay]);
 
   const togglePlayback = useCallback(() => {
     if (isPlaying) {
       player.pause();
       setIsPlaying(false);
+      setIsManuallyPaused(true);
       return;
     }
 
     player.play();
     setIsPlaying(true);
+    setIsManuallyPaused(false);
   }, [isPlaying, player]);
 
   const toggleMute = useCallback((event: GestureResponderEvent) => {
