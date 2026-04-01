@@ -67,7 +67,6 @@ export default function VideoCard({
     }
 
     player.pause();
-    player.currentTime = 0;
     setIsPlaying(false);
   }, [player, shouldAutoPlay]);
 
