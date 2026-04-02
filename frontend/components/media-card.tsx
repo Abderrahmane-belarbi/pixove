@@ -22,6 +22,7 @@ export function MediaCard({ post, isVisible }: MediaCardProps) {
         shadowOpacity: 0.25,
         shadowRadius: 16,
         elevation: 6,
+        marginBottom: 16,
       }}
     >
       {post.media.type === "video" && (

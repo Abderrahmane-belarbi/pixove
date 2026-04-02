@@ -1,12 +1,7 @@
 import { useVideoPlayer, VideoSource, VideoView } from "expo-video";
 import { Play, Volume2, VolumeX } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  GestureResponderEvent,
-  Pressable,
-  StyleSheet,
-  View,
-} from "react-native";
+import { GestureResponderEvent, Pressable, View } from "react-native";
 
 type VideoCardProps = {
   url: string;
@@ -68,10 +63,11 @@ export default function VideoCard({
 
     player.pause();
     setIsPlaying(false);
+
     if (!shouldAutoPlay) {
       setIsManuallyPaused(false);
     }
-  }, [isManuallyPaused, player, shouldAutoPlay]);
+  }, [shouldAutoPlay, isManuallyPaused, player]);
 
   const togglePlayback = useCallback(() => {
     if (isPlaying) {
@@ -88,13 +84,25 @@ export default function VideoCard({
 
   const toggleMute = useCallback((event: GestureResponderEvent) => {
     event.stopPropagation();
-    setIsMuted((prevMuted) => !prevMuted);
+    setIsMuted((prev) => !prev);
   }, []);
 
   return (
-    <Pressable onPress={togglePlayback} style={styles.container}>
+    <Pressable
+      onPress={togglePlayback}
+      style={{
+        position: "relative",
+        width: "100%",
+        aspectRatio: 9 / 16,
+        overflow: "hidden",
+        backgroundColor: "#000",
+      }}
+    >
       <VideoView
-        style={styles.video}
+        style={{
+          width: "100%",
+          height: "100%",
+        }}
         player={player}
         allowsFullscreen={false}
         allowsPictureInPicture={false}
@@ -103,14 +111,47 @@ export default function VideoCard({
       />
 
       {!isPlaying && (
-        <View style={styles.centerOverlay}>
-          <View style={styles.centerBadge}>
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <View
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: 32,
+              backgroundColor: "rgba(0,0,0,0.38)",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
             <Play color="#FFFFFF" size={24} fill="#FFFFFF" />
           </View>
         </View>
       )}
 
-      <Pressable onPress={toggleMute} style={styles.muteButton} hitSlop={8}>
+      <Pressable
+        onPress={toggleMute}
+        hitSlop={8}
+        style={{
+          position: "absolute",
+          right: 12,
+          bottom: 12,
+          width: 34,
+          height: 34,
+          borderRadius: 17,
+          backgroundColor: "rgba(0,0,0,0.45)",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
         {isMuted ? (
           <VolumeX color="#FFFFFF" size={18} />
         ) : (
@@ -120,45 +161,3 @@ export default function VideoCard({
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    position: "relative",
-    width: "100%",
-    aspectRatio: 9 / 16,
-    overflow: "hidden",
-    backgroundColor: "#000",
-  },
-  video: {
-    width: "100%",
-    height: "100%",
-  },
-  centerOverlay: {
-    position: "absolute",
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  centerBadge: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: "rgba(0,0,0,0.38)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  muteButton: {
-    position: "absolute",
-    right: 12,
-    bottom: 12,
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: "rgba(0,0,0,0.45)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
