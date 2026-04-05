@@ -1,12 +1,12 @@
 import { useVideoPlayer, VideoSource, VideoView } from "expo-video";
-import { Play, Volume2, VolumeX } from "lucide-react-native";
+import { Volume2, VolumeX } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { GestureResponderEvent, Pressable, View } from "react-native";
 
 type VideoCardProps = {
   url: string;
   hlsUrl?: string;
-  shouldAutoPlay: boolean;
+  shouldAutoPlay: boolean; // comes from FlatList viewability
 };
 
 function buildCloudinaryHlsUrl(rawUrl: string): string | null {
@@ -18,6 +18,7 @@ function buildCloudinaryHlsUrl(rawUrl: string): string | null {
   }
 
   const hasStreamingProfile = rawUrl.includes("/video/upload/sp_");
+
   const withStreamingProfile = hasStreamingProfile
     ? rawUrl
     : rawUrl.replace("/video/upload/", "/video/upload/sp_auto/");
@@ -34,109 +35,94 @@ export default function VideoCard({
   shouldAutoPlay,
 }: VideoCardProps) {
   const source = useMemo<VideoSource>(() => {
-    const derivedHlsUrl = hlsUrl ?? buildCloudinaryHlsUrl(url);
-
-    return {
-      uri: derivedHlsUrl ?? url,
-    };
+    const derived = hlsUrl ?? buildCloudinaryHlsUrl(url);
+    return { uri: derived ?? url };
   }, [hlsUrl, url]);
 
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(true);
-  const [isManuallyPaused, setIsManuallyPaused] = useState(false);
-
-  const player = useVideoPlayer(source, (videoPlayer) => {
-    videoPlayer.loop = true;
-    videoPlayer.muted = true;
+  const player = useVideoPlayer(source, (p) => {
+    p.loop = true;
+    p.muted = true;
   });
 
+  const [isMuted, setIsMuted] = useState(true);
+
+  /**
+   * SINGLE SOURCE OF TRUTH:
+   * playback is derived from shouldAutoPlay ONLY
+   */
+  useEffect(() => {
+    if (shouldAutoPlay) {
+      player.play();
+    } else {
+      player.pause();
+    }
+  }, [shouldAutoPlay, player]);
+
+  /**
+   * keep mute synced
+   */
   useEffect(() => {
     player.muted = isMuted;
   }, [isMuted, player]);
 
-  useEffect(() => {
-    if (shouldAutoPlay && !isManuallyPaused) {
-      player.play();
-      setIsPlaying(true);
-      return;
-    }
-
-    player.pause();
-    setIsPlaying(false);
-
-    if (!shouldAutoPlay) {
-      setIsManuallyPaused(false);
-    }
-  }, [shouldAutoPlay, isManuallyPaused, player]);
-
+  /**
+   * user interaction overrides autoplay ONLY via player state
+   * (no extra React flags)
+   */
   const togglePlayback = useCallback(() => {
-    if (isPlaying) {
+    console.log("Pressed video card, toggling playback");
+    const isCurrentlyPlaying = player.playing; // expo-video source of truth
+
+    if (isCurrentlyPlaying) {
       player.pause();
-      setIsPlaying(false);
-      setIsManuallyPaused(true);
-      return;
+    } else {
+      player.play();
     }
+  }, [player]);
 
-    player.play();
-    setIsPlaying(true);
-    setIsManuallyPaused(false);
-  }, [isPlaying, player]);
-
-  const toggleMute = useCallback((event: GestureResponderEvent) => {
-    event.stopPropagation();
-    setIsMuted((prev) => !prev);
+  const toggleMute = useCallback((e: GestureResponderEvent) => {
+    e.stopPropagation();
+    setIsMuted((v) => !v);
   }, []);
 
+  /**
+   * derive UI state from player instead of React state
+   */
+  const isPlaying = player.playing;
+
   return (
-    <Pressable
-      onPress={togglePlayback}
+    <View
       style={{
-        position: "relative",
         width: "100%",
         aspectRatio: 9 / 16,
-        overflow: "hidden",
+        position: "relative",
         backgroundColor: "#000",
       }}
     >
+      {/* VIDEO (non-interactive) */}
       <VideoView
-        style={{
-          width: "100%",
-          height: "100%",
-        }}
+        style={{ width: "100%", height: "100%" }}
         player={player}
+        pointerEvents="none"
         allowsFullscreen={false}
         allowsPictureInPicture={false}
         contentFit="cover"
         nativeControls={false}
       />
 
-      {!isPlaying && (
-        <View
-          style={{
-            position: "absolute",
-            top: 0,
-            right: 0,
-            bottom: 0,
-            left: 0,
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <View
-            style={{
-              width: 64,
-              height: 64,
-              borderRadius: 32,
-              backgroundColor: "rgba(0,0,0,0.38)",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Play color="#FFFFFF" size={24} fill="#FFFFFF" />
-          </View>
-        </View>
-      )}
+      {/* FULL TAP LAYER */}
+      <Pressable
+        onPress={togglePlayback}
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+        }}
+      />
 
+      {/* MUTE BUTTON */}
       <Pressable
         onPress={toggleMute}
         hitSlop={8}
@@ -153,11 +139,11 @@ export default function VideoCard({
         }}
       >
         {isMuted ? (
-          <VolumeX color="#FFFFFF" size={18} />
+          <VolumeX color="#fff" size={18} />
         ) : (
-          <Volume2 color="#FFFFFF" size={18} />
+          <Volume2 color="#fff" size={18} />
         )}
       </Pressable>
-    </Pressable>
+    </View>
   );
 }
