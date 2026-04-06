@@ -1,12 +1,12 @@
 import { useVideoPlayer, VideoSource, VideoView } from "expo-video";
-import { Volume2, VolumeX } from "lucide-react-native";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { GestureResponderEvent, Pressable, View } from "react-native";
+import { Pause, Play, Volume2, VolumeX } from "lucide-react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Animated, GestureResponderEvent, Pressable, View } from "react-native";
 
 type VideoCardProps = {
   url: string;
   hlsUrl?: string;
-  shouldAutoPlay: boolean; // comes from FlatList viewability
+  shouldAutoPlay: boolean;
 };
 
 function buildCloudinaryHlsUrl(rawUrl: string): string | null {
@@ -34,61 +34,92 @@ export default function VideoCard({
   hlsUrl,
   shouldAutoPlay,
 }: VideoCardProps) {
+  // ---------------- SOURCE ----------------
   const source = useMemo<VideoSource>(() => {
     const derived = hlsUrl ?? buildCloudinaryHlsUrl(url);
     return { uri: derived ?? url };
   }, [hlsUrl, url]);
 
+  // ---------------- PLAYER ----------------
   const player = useVideoPlayer(source, (p) => {
     p.loop = true;
     p.muted = true;
   });
 
+  // ---------------- STATE ----------------
   const [isMuted, setIsMuted] = useState(true);
+  const [isManuallyPaused, setIsManuallyPaused] = useState(false);
+  const [overlayIcon, setOverlayIcon] = useState<"play" | "pause" | null>(null);
 
-  /**
-   * SINGLE SOURCE OF TRUTH:
-   * playback is derived from shouldAutoPlay ONLY
-   */
+  // ---------------- ANIMATION ----------------
+  const scaleAnim = useRef(new Animated.Value(0)).current;
+
+  const runAnimation = useCallback(() => {
+    scaleAnim.stopAnimation(); // prevent race conditions
+    scaleAnim.setValue(0);
+
+    Animated.timing(scaleAnim, {
+      toValue: 1,
+      duration: 400,
+      useNativeDriver: true,
+    }).start(() => {
+      setOverlayIcon(null);
+    });
+  }, [scaleAnim]);
+
+  const animatedStyle = {
+    transform: [
+      {
+        scale: scaleAnim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0.6, 1.2],
+        }),
+      },
+    ],
+    opacity: scaleAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [1, 0],
+    }),
+  };
+
+  // ---------------- EFFECTS ----------------
+
+  // autoplay + manual override (correct logic)
   useEffect(() => {
-    if (shouldAutoPlay) {
+    if (shouldAutoPlay && !isManuallyPaused) {
       player.play();
     } else {
       player.pause();
     }
-  }, [shouldAutoPlay, player]);
+  }, [shouldAutoPlay, isManuallyPaused, player]);
 
-  /**
-   * keep mute synced
-   */
+  // sync mute
   useEffect(() => {
     player.muted = isMuted;
   }, [isMuted, player]);
 
-  /**
-   * user interaction overrides autoplay ONLY via player state
-   * (no extra React flags)
-   */
-  const togglePlayback = useCallback(() => {
-    console.log("Pressed video card, toggling playback");
-    const isCurrentlyPlaying = player.playing; // expo-video source of truth
+  // ---------------- HANDLERS ----------------
 
-    if (isCurrentlyPlaying) {
+  const togglePlayback = useCallback(() => {
+    if (player.playing) {
       player.pause();
+      setIsManuallyPaused(true);
+      setOverlayIcon("pause");
     } else {
       player.play();
+      setIsManuallyPaused(false);
+      setOverlayIcon("play");
     }
-  }, [player]);
+
+    runAnimation();
+  }, [player, runAnimation]);
 
   const toggleMute = useCallback((e: GestureResponderEvent) => {
     e.stopPropagation();
     setIsMuted((v) => !v);
   }, []);
 
-  /**
-   * derive UI state from player instead of React state
-   */
-  const isPlaying = player.playing;
+  // ---------------- UI ----------------
 
   return (
     <View
@@ -99,7 +130,7 @@ export default function VideoCard({
         backgroundColor: "#000",
       }}
     >
-      {/* VIDEO (non-interactive) */}
+      {/* VIDEO */}
       <VideoView
         style={{ width: "100%", height: "100%" }}
         player={player}
@@ -121,6 +152,41 @@ export default function VideoCard({
           bottom: 0,
         }}
       />
+
+      {/* CENTER ICON ANIMATION */}
+      {overlayIcon && (
+        <Animated.View
+          style={[
+            {
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              alignItems: "center",
+              justifyContent: "center",
+            },
+            animatedStyle,
+          ]}
+        >
+          <View
+            style={{
+              width: 72,
+              height: 72,
+              borderRadius: 36,
+              backgroundColor: "rgba(0,0,0,0.4)",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {overlayIcon === "play" ? (
+              <Play color="#fff" size={28} fill="#fff" />
+            ) : (
+              <Pause color="#fff" size={28} />
+            )}
+          </View>
+        </Animated.View>
+      )}
 
       {/* MUTE BUTTON */}
       <Pressable
